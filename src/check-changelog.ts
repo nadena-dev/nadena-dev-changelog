@@ -1,10 +1,7 @@
 import { Octokit } from '@octokit/action'
 import * as core from '@actions/core'
 import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods'
-
-const filter_comment = /<!--.*?-->/gm
-const changelog_en = /^(`{3,})CHANGELOG-([a-z-]+)\s*?\n\s*([\s\S]+?)\n\1\s*$/gm
-
+import { extract_changelog, strip_html_comments } from './parse-pr.js'
 const MyOctokit = Octokit.plugin(restEndpointMethods)
 const octokit = new MyOctokit()
 
@@ -20,19 +17,18 @@ export async function check_changelog(): Promise<void> {
     pull_number: +pull_number
   })
 
-  let body = pull.data.body ?? ''
-  body = body.replaceAll(filter_comment, '')
+  core.debug('body:\n' + JSON.stringify(pull.data, null, 2))
 
-  const matches = [...body.matchAll(changelog_en)]
-  for (const match of matches) {
-    console.log('match:\n' + JSON.stringify(match, null))
+  let body = pull.data.body ?? ''
+  body = strip_html_comments(body)
+
+  const changelogs = extract_changelog(body)
+
+  for (const changelog of changelogs) {
+    core.debug(`Found changelog in ${changelog.lang}:\n${changelog.body}`)
   }
 
-  if (matches.length === 0) {
+  if (changelogs.length === 0) {
     throw new Error('No CHANGELOG found in the PR body')
   }
-
-  //const body = pull.data
-
-  console.log('body:\n' + JSON.stringify(pull.data, null, 2))
 }
