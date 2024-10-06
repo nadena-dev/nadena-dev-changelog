@@ -3,7 +3,7 @@ export function strip_html_comments(body: string): string {
 }
 
 const changelog_regex =
-  /^(`{3,})CHANGELOG-([a-z-]+)\s*?\n\s*([\s\S]+?\S)\s*?\n\s*\1\s*$/gm
+  /^(`{3,})CHANGELOG-([a-zA-Z-]+)\s*?\n\s*([\s\S]+?\S)\s*?\n\s*\1\s*$/gm
 
 export interface Changelog {
   lang: string

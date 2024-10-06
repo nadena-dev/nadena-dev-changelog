@@ -56478,7 +56478,7 @@ function getApiBaseUrl() {
 function strip_html_comments(body) {
     return body.replace(/<!--[\s\S]*?-->/gm, '');
 }
-const changelog_regex = /^(`{3,})CHANGELOG-([a-z-]+)\s*?\n\s*([\s\S]+?\S)\s*?\n\s*\1\s*$/gm;
+const changelog_regex = /^(`{3,})CHANGELOG-([a-zA-Z-]+)\s*?\n\s*([\s\S]+?\S)\s*?\n\s*\1\s*$/gm;
 function extract_changelog(body) {
     const matches = [...body.matchAll(changelog_regex)];
     return matches.map(match => {
