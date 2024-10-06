@@ -19,7 +19,10 @@ async function write_one(path: string, content: string): Promise<void> {
   const combined_repo = core.getInput('repository')
   const [owner, repo] = combined_repo.split('/')
 
-  octokit.rest.repos.createOrUpdateFileContents({
+  console.log(
+    `Writing ${path} to ${owner}/${repo}:meta-changelog; contents:\n${content}`
+  )
+  await octokit.rest.repos.createOrUpdateFileContents({
     owner,
     repo,
     path,
@@ -43,6 +46,11 @@ export async function record_pr_changelog(): Promise<void> {
   })
 
   core.debug('body:\n' + JSON.stringify(pull.data, null, 2))
+
+  if (!pull.data.merged) {
+    console.log('PR not merged - skipping')
+    return
+  }
 
   let body = pull.data.body ?? ''
   body = strip_html_comments(body)

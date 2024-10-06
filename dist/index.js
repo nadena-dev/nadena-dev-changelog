@@ -56841,7 +56841,8 @@ const prerel_only = /^CHANGELOG:\s*prerelease-only\s*$/m;
 async function write_one(path, content) {
     const combined_repo = core.getInput('repository');
     const [owner, repo] = combined_repo.split('/');
-    record_pr_changelog_octokit.rest.repos.createOrUpdateFileContents({
+    console.log(`Writing ${path} to ${owner}/${repo}:meta-changelog; contents:\n${content}`);
+    await record_pr_changelog_octokit.rest.repos.createOrUpdateFileContents({
         owner,
         repo,
         path,
@@ -56861,6 +56862,10 @@ async function record_pr_changelog() {
         pull_number: +pull_number
     });
     core.debug('body:\n' + JSON.stringify(pull.data, null, 2));
+    if (!pull.data.merged) {
+        console.log('PR not merged - skipping');
+        return;
+    }
     let body = pull.data.body ?? '';
     body = strip_html_comments(body);
     const changelogs = extract_changelog(body);
