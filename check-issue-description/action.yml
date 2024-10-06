@@ -17,6 +17,9 @@ inputs:
     default: ${{ github.event.number }}
   command:
     default: check_changelog
+  token:
+    description: 'GitHub token'
+    required: true
 
 # Define your outputs here.
 outputs:
