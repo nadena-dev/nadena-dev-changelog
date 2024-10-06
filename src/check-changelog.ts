@@ -2,8 +2,8 @@ import { Octokit } from '@octokit/action'
 import * as core from '@actions/core'
 import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods'
 
-const filter_comment = /<!--.*?-->/
-const changelog_en = /^(`{3,})CHANGELOG-([a-z-]+)\s*\n([\s\S]+?)\n\1\s*$/gm
+const filter_comment = /<!--.*?-->/gm
+const changelog_en = /^(`{3,})CHANGELOG-([a-z-]+)\s*?\n\s*([\s\S]+?)\n\1\s*$/gm
 
 const MyOctokit = Octokit.plugin(restEndpointMethods)
 const octokit = new MyOctokit()
@@ -21,7 +21,7 @@ export async function check_changelog(): Promise<void> {
   })
 
   let body = pull.data.body ?? ''
-  body = body.replace(filter_comment, '')
+  body = body.replaceAll(filter_comment, '')
 
   const matches = [...body.matchAll(changelog_en)]
   for (const match of matches) {

@@ -56478,8 +56478,8 @@ function getApiBaseUrl() {
 
 
 
-const filter_comment = /<!--.*?-->/;
-const changelog_en = /^(`{3,})CHANGELOG-([a-z-]+)\s*\n([\s\S]+?)\n\1\s*$/gm;
+const filter_comment = /<!--.*?-->/gm;
+const changelog_en = /^(`{3,})CHANGELOG-([a-z-]+)\s*?\n\s*([\s\S]+?)\n\1\s*$/gm;
 const MyOctokit = dist_bundle_Octokit.plugin(restEndpointMethods);
 const octokit = new MyOctokit();
 async function check_changelog() {
@@ -56492,7 +56492,7 @@ async function check_changelog() {
         pull_number: +pull_number
     });
     let body = pull.data.body ?? '';
-    body = body.replace(filter_comment, '');
+    body = body.replaceAll(filter_comment, '');
     const matches = [...body.matchAll(changelog_en)];
     for (const match of matches) {
         console.log('match:\n' + JSON.stringify(match, null));
