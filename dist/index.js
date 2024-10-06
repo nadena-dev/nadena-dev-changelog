@@ -56493,7 +56493,7 @@ function extract_changelog(body) {
 
 const MyOctokit = dist_bundle_Octokit.plugin(restEndpointMethods);
 const octokit = new MyOctokit();
-const no_changelog = /^NO-CHANGELOG\s*$/;
+const no_changelog = /^NO-CHANGELOG\s*$/m;
 async function check_changelog() {
     const combined_repo = core.getInput('repository');
     const pull_number = core.getInput('pull_request_id');

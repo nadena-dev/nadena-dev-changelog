@@ -5,7 +5,7 @@ import { extract_changelog, strip_html_comments } from './parse-pr.js'
 const MyOctokit = Octokit.plugin(restEndpointMethods)
 const octokit = new MyOctokit()
 
-const no_changelog = /^NO-CHANGELOG\s*$/
+const no_changelog = /^NO-CHANGELOG\s*$/m
 
 export async function check_changelog(): Promise<void> {
   const combined_repo = core.getInput('repository')
