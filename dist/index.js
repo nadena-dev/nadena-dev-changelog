@@ -56478,6 +56478,8 @@ function getApiBaseUrl() {
 
 
 
+const filter_comment = /<!--.*?-->/;
+const changelog_en = /^(`{3,})CHANGELOG-([a-z-]+)\s*\n([\s\S]+?)\n\1\s*$/gm;
 const MyOctokit = dist_bundle_Octokit.plugin(restEndpointMethods);
 const octokit = new MyOctokit();
 async function check_changelog() {
@@ -56489,6 +56491,15 @@ async function check_changelog() {
         repo,
         pull_number: +pull_number
     });
+    let body = pull.data.body ?? '';
+    body = body.replace(filter_comment, '');
+    const matches = [...body.matchAll(changelog_en)];
+    for (const match of matches) {
+        console.log('match:\n' + JSON.stringify(match, null));
+    }
+    if (matches.length === 0) {
+        throw new Error('No CHANGELOG found in the PR body');
+    }
     //const body = pull.data
     console.log('body:\n' + JSON.stringify(pull.data, null, 2));
 }

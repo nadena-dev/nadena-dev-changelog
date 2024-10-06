@@ -23,8 +23,8 @@ export async function check_changelog(): Promise<void> {
   let body = pull.data.body ?? ''
   body = body.replace(filter_comment, '')
 
-  let matches = [...body.matchAll(changelog_en)]
-  for (let match of matches) {
+  const matches = [...body.matchAll(changelog_en)]
+  for (const match of matches) {
     console.log('match:\n' + JSON.stringify(match, null))
   }
 
