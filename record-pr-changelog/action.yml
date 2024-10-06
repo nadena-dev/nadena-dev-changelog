@@ -15,7 +15,7 @@ inputs:
     description: 'Pull request ID'
     default: ${{ github.event.number }}
   command:
-    default: check_changelog
+    default: record_pr_changelog
   token:
     description: 'GitHub token'
     required: true
