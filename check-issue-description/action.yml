@@ -11,8 +11,7 @@ branding:
 inputs:
   repository:
     description: 'Repository name (including owner)'
-    required: true
-    default: 
+    default: github.action_repository	
   pull_request_id:
     description: 'Pull request ID'
     default: ${{ github.event.number }}
