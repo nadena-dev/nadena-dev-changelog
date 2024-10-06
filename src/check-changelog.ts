@@ -19,5 +19,5 @@ export async function check_changelog(): Promise<void> {
 
   //const body = pull.data
 
-  core.debug('body:\n' + JSON.stringify(pull.data, null, 2))
+  console.log('body:\n' + JSON.stringify(pull.data, null, 2))
 }

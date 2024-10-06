@@ -56490,7 +56490,7 @@ async function check_changelog() {
         pull_number: +pull_number
     });
     //const body = pull.data
-    core.debug('body:\n' + JSON.stringify(pull.data, null, 2));
+    console.log('body:\n' + JSON.stringify(pull.data, null, 2));
 }
 
 ;// CONCATENATED MODULE: ./src/index.ts
