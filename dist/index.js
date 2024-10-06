@@ -56474,12 +56474,23 @@ function getApiBaseUrl() {
 }
 
 
+;// CONCATENATED MODULE: ./src/parse-pr.ts
+function strip_html_comments(body) {
+    return body.replace(/<!--[\s\S]*?-->/gm, '');
+}
+const changelog_regex = /^(`{3,})CHANGELOG-([a-z-]+)\s*?\n\s*([\s\S]+?\S)\s*?\n\s*\1\s*$/gm;
+function extract_changelog(body) {
+    const matches = [...body.matchAll(changelog_regex)];
+    return matches.map(match => {
+        return { lang: match[2], body: match[3] };
+    });
+}
+
 ;// CONCATENATED MODULE: ./src/check-changelog.ts
 
 
 
-const filter_comment = /<!--.*?-->/gm;
-const changelog_en = /^(`{3,})CHANGELOG-([a-z-]+)\s*?\n\s*([\s\S]+?)\n\1\s*$/gm;
+
 const MyOctokit = dist_bundle_Octokit.plugin(restEndpointMethods);
 const octokit = new MyOctokit();
 async function check_changelog() {
@@ -56491,17 +56502,16 @@ async function check_changelog() {
         repo,
         pull_number: +pull_number
     });
+    core.debug('body:\n' + JSON.stringify(pull.data, null, 2));
     let body = pull.data.body ?? '';
-    body = body.replaceAll(filter_comment, '');
-    const matches = [...body.matchAll(changelog_en)];
-    for (const match of matches) {
-        console.log('match:\n' + JSON.stringify(match, null));
+    body = strip_html_comments(body);
+    const changelogs = extract_changelog(body);
+    for (const changelog of changelogs) {
+        core.debug(`Found changelog in ${changelog.lang}:\n${changelog.body}`);
     }
-    if (matches.length === 0) {
+    if (changelogs.length === 0) {
         throw new Error('No CHANGELOG found in the PR body');
     }
-    //const body = pull.data
-    console.log('body:\n' + JSON.stringify(pull.data, null, 2));
 }
 
 ;// CONCATENATED MODULE: ./src/index.ts
