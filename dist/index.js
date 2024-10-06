@@ -56493,6 +56493,7 @@ function extract_changelog(body) {
 
 const MyOctokit = dist_bundle_Octokit.plugin(restEndpointMethods);
 const octokit = new MyOctokit();
+const no_changelog = /^NO-CHANGELOG\s*$/;
 async function check_changelog() {
     const combined_repo = core.getInput('repository');
     const pull_number = core.getInput('pull_request_id');
@@ -56506,11 +56507,18 @@ async function check_changelog() {
     let body = pull.data.body ?? '';
     body = strip_html_comments(body);
     const changelogs = extract_changelog(body);
-    for (const changelog of changelogs) {
-        core.debug(`Found changelog in ${changelog.lang}:\n${changelog.body}`);
+    if (body.match(no_changelog)) {
+        if (changelogs.length > 0) {
+            core.setFailed('Found CHANGELOG in PR body, but PR body contains NO-CHANGELOG');
+        }
     }
-    if (changelogs.length === 0) {
-        throw new Error('No CHANGELOG found in the PR body');
+    else {
+        for (const changelog of changelogs) {
+            core.debug(`Found changelog in ${changelog.lang}:\n${changelog.body}`);
+        }
+        if (changelogs.length === 0) {
+            core.setFailed('No CHANGELOG found in the PR body');
+        }
     }
 }
 

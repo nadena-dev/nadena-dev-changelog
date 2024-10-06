@@ -5,6 +5,8 @@ import { extract_changelog, strip_html_comments } from './parse-pr.js'
 const MyOctokit = Octokit.plugin(restEndpointMethods)
 const octokit = new MyOctokit()
 
+const no_changelog = /^NO-CHANGELOG\s*$/
+
 export async function check_changelog(): Promise<void> {
   const combined_repo = core.getInput('repository')
   const pull_number = core.getInput('pull_request_id')
@@ -24,11 +26,19 @@ export async function check_changelog(): Promise<void> {
 
   const changelogs = extract_changelog(body)
 
-  for (const changelog of changelogs) {
-    core.debug(`Found changelog in ${changelog.lang}:\n${changelog.body}`)
-  }
+  if (body.match(no_changelog)) {
+    if (changelogs.length > 0) {
+      core.setFailed(
+        'Found CHANGELOG in PR body, but PR body contains NO-CHANGELOG'
+      )
+    }
+  } else {
+    for (const changelog of changelogs) {
+      core.debug(`Found changelog in ${changelog.lang}:\n${changelog.body}`)
+    }
 
-  if (changelogs.length === 0) {
-    throw new Error('No CHANGELOG found in the PR body')
+    if (changelogs.length === 0) {
+      core.setFailed('No CHANGELOG found in the PR body')
+    }
   }
 }
