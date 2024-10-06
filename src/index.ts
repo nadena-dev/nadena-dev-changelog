@@ -10,7 +10,7 @@ export async function run(): Promise<void> {
     const command: string = core.getInput('command')
 
     switch (command) {
-      case 'check-changelog':
+      case 'check_changelog':
         await check_changelog()
         break
       default:
