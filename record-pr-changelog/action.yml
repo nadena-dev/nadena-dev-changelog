@@ -22,7 +22,7 @@ inputs:
   git-committer:
     description: 'Git committer name'
     default: nadena.dev CI
-  git-committer-email:
+  git-email:
     description: 'Git committer email'
     default: 'ci@nadena.dev'
 
