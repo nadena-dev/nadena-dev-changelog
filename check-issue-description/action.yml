@@ -9,10 +9,13 @@ branding:
 
 # Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
+  repository:
+    description: 'Repository name (including owner)'
     required: true
-    default: '1000'
+    default: 
+  pull_request_id:
+    description: 'Pull request ID'
+    default: ${{ github.event.number }}
 
 # Define your outputs here.
 outputs:
@@ -22,3 +25,7 @@ outputs:
 runs:
   using: node20
   main: ../dist/index.js
+  with:
+    command: check_changelog
+    repository: ${{ inputs.repository }}
+    pull_request_id: ${{ inputs.pull_request_id }}
