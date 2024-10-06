@@ -2,6 +2,9 @@ import { Octokit } from '@octokit/action'
 import * as core from '@actions/core'
 import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods'
 
+const filter_comment = /<!--.*?-->/;
+const changelog_en = /^(`{3,})CHANGELOG-([a-z-]+)\s*\n([\s\S]+?)\n\1\s*$/gm
+
 const MyOctokit = Octokit.plugin(restEndpointMethods)
 const octokit = new MyOctokit()
 
@@ -16,6 +19,18 @@ export async function check_changelog(): Promise<void> {
     repo,
     pull_number: +pull_number
   })
+
+  let body = pull.data.body ?? ''
+  body = body.replace(filter_comment, '')
+
+  let matches = [...body.matchAll(changelog_en)]
+  for (let match of matches) {
+    console.log('match:\n' + JSON.stringify(match, null)
+  }
+
+  if (matches.length === 0) {
+    throw new Error('No CHANGELOG found in the PR body')
+  }
 
   //const body = pull.data
 
