@@ -4,6 +4,7 @@
 import * as core from '@actions/core'
 
 import { check_changelog } from './check-changelog.js'
+import { record_pr_changelog } from './record-pr-changelog.js'
 
 export async function run(): Promise<void> {
   try {
@@ -12,6 +13,9 @@ export async function run(): Promise<void> {
     switch (command) {
       case 'check_changelog':
         await check_changelog()
+        break
+      case 'record_pr_changelog':
+        await record_pr_changelog()
         break
       default:
         core.setFailed('Unknown command: ' + command)
