@@ -1,0 +1,30 @@
+name: 'Record merged PRs on meta branch'
+author: 'bd_'
+
+# Add your action's branding here. This will appear on the GitHub Marketplace.
+# branding:
+#   icon: 'heart'
+#   color: 'red'
+
+# Define your inputs here.
+inputs:
+  repository:
+    description: 'Repository name (including owner)'
+    default: ${{ github.repository	}}
+  pull_request_id:
+    description: 'Pull request ID'
+    default: ${{ github.event.number }}
+  command:
+    default: check_changelog
+  token:
+    description: 'GitHub token'
+    required: true
+
+# Define your outputs here.
+# outputs:
+#   time:
+#     description: 'Your output description here'
+
+runs:
+  using: node20
+  main: ../dist/index.js
