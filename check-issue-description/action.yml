@@ -15,6 +15,8 @@ inputs:
   pull_request_id:
     description: 'Pull request ID'
     default: ${{ github.event.number }}
+  command:
+    default: check_changelog
 
 # Define your outputs here.
 outputs:
@@ -24,7 +26,3 @@ outputs:
 runs:
   using: node20
   main: ../dist/index.js
-  with:
-    command: check_changelog
-    repository: ${{ inputs.repository }}
-    pull_request_id: ${{ inputs.pull_request_id }}
