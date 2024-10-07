@@ -242,7 +242,7 @@ function insert_unknown_prs(
   // Flush any remaining lines
   output_lines.push(...lines)
 
-  return output_lines.join("\n").trim() + "\n"
+  return output_lines.join('\n').trim() + '\n'
 }
 
 function parse_known_prs(changelog_string: string): {
