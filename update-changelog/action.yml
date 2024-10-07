@@ -58,6 +58,8 @@ runs:
     - name: Generate changelog
       shell: bash
       run: |
+        set -x
+        ls -lR
         for file in ${{ inputs.changelog_file }}; do
           echo "Generating changelog for $file"
           node $GITHUB_ACTION_PATH/../dist/index.js --command=update-changelog --meta=update-changelog-meta --changelog=update-changelog-wc/$file
