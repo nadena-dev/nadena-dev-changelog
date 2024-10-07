@@ -37,15 +37,15 @@ if (process.argv.length > 2) {
 
   switch (args['command']) {
     case 'update-changelog':
-      await update_changelog(args)
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      update_changelog(args)
       break
     default:
       console.error('Unknown command: ' + args['command'])
       process.exit(1)
       break
   }
-  process.exit(0)
+} else {
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  run()
 }
-
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
-run()
