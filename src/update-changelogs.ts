@@ -32,7 +32,8 @@ async function load_metadata(
     let match = re_meta_file.exec(file)
     if (match) {
       const pr_number = match[1]
-      const meta = JSON.parse(file)
+      const body = readFileSync(file, 'utf8')
+      const meta = JSON.parse(body)
 
       if (!pr_dict[pr_number]) {
         pr_dict[pr_number] = {}
