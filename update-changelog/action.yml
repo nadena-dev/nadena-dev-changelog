@@ -56,12 +56,14 @@ runs:
         token: ${{ inputs.token }}
         path: update-changelog-meta
     - name: Generate changelog
+      shell: bash
       run: |
         for file in ${{ inputs.changelog_file }}; do
           echo "Generating changelog for $file"
           node ../dist/index.js --comand=update-changelog --meta=update-changelog-meta --changelog=update-changelog-wc/$file
         done
     - name: Commit changelog
+      shell: bash
       run: |
         # Check if there are any changes
         if [[ -n $(git -C update-changelog-wc status --porcelain) ]]; then
