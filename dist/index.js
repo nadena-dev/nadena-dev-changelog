@@ -91202,6 +91202,7 @@ async function load_metadata(meta_path, target_lang, fallback_lang) {
             const lang = match[2];
             // read file
             const body = (0,external_fs_.readFileSync)(file, 'utf8');
+            console.log(`Processing body for ${pr_number} ${lang}`);
             if (!pr_dict[pr_number]) {
                 pr_dict[pr_number] = {};
             }

@@ -48,6 +48,8 @@ async function load_metadata(
       // read file
       const body = readFileSync(file, 'utf8')
 
+      console.log(`Processing body for ${pr_number} ${lang}`)
+
       if (!pr_dict[pr_number]) {
         pr_dict[pr_number] = {}
       }
