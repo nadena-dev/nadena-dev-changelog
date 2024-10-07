@@ -91258,9 +91258,6 @@ async function update_changelog(args) {
 }
 function format_pr(pr_number, pr) {
     const lines = [];
-    if (pr.meta) {
-        lines.push(JSON.stringify(pr.meta));
-    }
     lines.push(`<!-- PR-${pr_number} -->`);
     lines.push(pr.changelog ?? '');
     lines.push('<!-- END -->');
@@ -91337,9 +91334,12 @@ function insert_unknown_prs(changelog_string, metadata, unreleased_headings) {
         output_lines.push(line);
     }
     // Flush the last encountered section
+    console.log(`final flush: ${cur_heading}`);
+    console.info(heading_to_pr);
     const new_prs = heading_to_pr.get(cur_heading ?? '');
     if (new_prs) {
         for (const pr_number of new_prs) {
+            console.log(`flushing ${pr_number}`);
             const pr = metadata[pr_number];
             output_lines.push(...format_pr(pr_number, pr));
         }
