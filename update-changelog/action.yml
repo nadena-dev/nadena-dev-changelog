@@ -48,13 +48,13 @@ runs:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.target_branch }}
         token: ${{ inputs.token }}
-        path: $GITHUB_ACTION_PATH/update-changelog-wc
+        path: ${{ github.action_path }}/update-changelog-wc
     - uses: actions/checkout@v4
       with:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.meta_branch }}
         token: ${{ inputs.token }}
-        path: $GITHUB_ACTION_PATH/update-changelog-meta
+        path: ${{ github.action_path }}/update-changelog-meta
     - name: Generate changelog
       shell: bash
       run: |
