@@ -91318,11 +91318,13 @@ function insert_unknown_prs(changelog_string, metadata, unreleased_headings) {
                 output_lines[output_lines.length - 1].trim() === '') {
                 output_lines.pop();
             }
-            const new_prs = heading_to_pr.get(heading_match[1]);
-            if (new_prs) {
-                for (const pr_number of new_prs) {
-                    const pr = metadata[pr_number];
-                    output_lines.push(...format_pr(pr_number, pr));
+            if (cur_heading !== undefined) {
+                const new_prs = heading_to_pr.get(cur_heading);
+                if (new_prs) {
+                    for (const pr_number of new_prs) {
+                        const pr = metadata[pr_number];
+                        output_lines.push(...format_pr(pr_number, pr));
+                    }
                 }
             }
             output_lines.push('');
