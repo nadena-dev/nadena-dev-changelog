@@ -5,6 +5,8 @@ import * as core from '@actions/core'
 
 import { check_changelog } from './check-changelog.js'
 import { record_pr_changelog } from './record-pr-changelog.js'
+import parseArgs from 'minimist'
+import { update_changelog } from './update-changelogs.js'
 
 export async function run(): Promise<void> {
   try {
@@ -24,6 +26,23 @@ export async function run(): Promise<void> {
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
+  }
+}
+
+console.log(JSON.stringify(process.argv, null, 2))
+
+if (process.argv.length > 2) {
+  const args = parseArgs(process.argv)
+  console.info(args)
+
+  switch (args['command']) {
+    case 'update-changelog':
+      update_changelog(args)
+      break
+    default:
+      console.error('Unknown command: ' + args['command'])
+      process.exit(1)
+      break
   }
 }
 

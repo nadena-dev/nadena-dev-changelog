@@ -4,16 +4,14 @@ import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods'
 import { extract_changelog, strip_html_comments } from './parse-pr.js'
 import { COMMITTER } from './committer.js'
 import { Base64 } from 'js-base64'
+import { PullMeta } from './meta.js'
 
 const MyOctokit = Octokit.plugin(restEndpointMethods)
 const octokit = new MyOctokit()
 
 const no_changelog = /^NO-CHANGELOG\s*$/m
 const prerel_only = /^CHANGELOG:\s*prerelease-only\s*$/m
-
-interface PullMeta {
-  tags: string[]
-}
+const heading_re = /^\s*?#+?\s*?(\s.+?)\s*?\n+?/m
 
 async function write_one(path: string, content: string): Promise<void> {
   const combined_repo = core.getInput('repository')
@@ -74,16 +72,27 @@ export async function record_pr_changelog(): Promise<void> {
     }
   }
 
+  let heading: string | null = null
   const is_prerelease_only = body.match(prerel_only)
+
+  for (const changelog of changelogs) {
+    const processed = changelog.body.replace(heading_re, match => {
+      if (changelog.lang == 'en-US') {
+        heading = match.trim()
+      }
+      return ''
+    })
+
+    await write_one(`pr/${pull_number}/${changelog.lang}.md`, processed)
+  }
 
   const meta: PullMeta = { tags: [] }
   if (is_prerelease_only) {
     meta.tags.push('prerelease-only')
   }
-
-  await write_one(`pr/${pull_number}/json`, body)
-
-  for (const changelog of changelogs) {
-    await write_one(`pr/${pull_number}/${changelog.lang}.md`, changelog.body)
+  if (heading !== null) {
+    meta.heading = heading
   }
+
+  await write_one(`pr/${pull_number}/meta.json`, JSON.stringify(meta, null, 2))
 }
