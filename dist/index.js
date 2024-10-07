@@ -90751,10 +90751,10 @@ function extract_changelog(body) {
 
 
 
-const MyOctokit = dist_bundle_Octokit.plugin(restEndpointMethods);
-const octokit = new MyOctokit();
 const no_changelog = /^NO-CHANGELOG\s*$/m;
 async function check_changelog() {
+    const MyOctokit = dist_bundle_Octokit.plugin(restEndpointMethods);
+    const octokit = new MyOctokit();
     const combined_repo = core.getInput('repository');
     const pull_number = core.getInput('pull_request_id');
     const [owner, repo] = combined_repo.split('/');
@@ -91094,16 +91094,14 @@ const gBase64 = {
 
 
 
-const record_pr_changelog_MyOctokit = dist_bundle_Octokit.plugin(restEndpointMethods);
-const record_pr_changelog_octokit = new record_pr_changelog_MyOctokit();
 const record_pr_changelog_no_changelog = /^NO-CHANGELOG\s*$/m;
 const prerel_only = /^CHANGELOG:\s*prerelease-only\s*$/m;
 const heading_re = /^\s*?#+?\s*?(\s.+?)\s*?\n+?/m;
-async function write_one(path, content) {
+async function write_one(octokit, path, content) {
     const combined_repo = core.getInput('repository');
     const [owner, repo] = combined_repo.split('/');
     console.log(`Writing ${path} to ${owner}/${repo}:meta-changelog; contents:\n${content}`);
-    await record_pr_changelog_octokit.rest.repos.createOrUpdateFileContents({
+    await octokit.rest.repos.createOrUpdateFileContents({
         owner,
         repo,
         path,
@@ -91114,10 +91112,12 @@ async function write_one(path, content) {
     });
 }
 async function record_pr_changelog() {
+    const MyOctokit = dist_bundle_Octokit.plugin(restEndpointMethods);
+    const octokit = new MyOctokit();
     const combined_repo = core.getInput('repository');
     const pull_number = core.getInput('pull_request_id');
     const [owner, repo] = combined_repo.split('/');
-    const pull = await record_pr_changelog_octokit.rest.pulls.get({
+    const pull = await octokit.rest.pulls.get({
         owner,
         repo,
         pull_number: +pull_number
@@ -91153,7 +91153,7 @@ async function record_pr_changelog() {
             }
             return '';
         });
-        await write_one(`pr/${pull_number}/${changelog.lang}.md`, processed);
+        await write_one(octokit, `pr/${pull_number}/${changelog.lang}.md`, processed);
     }
     const meta = { tags: [] };
     if (is_prerelease_only) {
@@ -91162,7 +91162,7 @@ async function record_pr_changelog() {
     if (heading !== null) {
         meta.heading = heading;
     }
-    await write_one(`pr/${pull_number}/meta.json`, JSON.stringify(meta, null, 2));
+    await write_one(octokit, `pr/${pull_number}/meta.json`, JSON.stringify(meta, null, 2));
 }
 
 // EXTERNAL MODULE: ./node_modules/minimist/index.js

@@ -2,12 +2,13 @@ import { Octokit } from '@octokit/action'
 import * as core from '@actions/core'
 import { restEndpointMethods } from '@octokit/plugin-rest-endpoint-methods'
 import { extract_changelog, strip_html_comments } from './parse-pr.js'
-const MyOctokit = Octokit.plugin(restEndpointMethods)
-const octokit = new MyOctokit()
 
 const no_changelog = /^NO-CHANGELOG\s*$/m
 
 export async function check_changelog(): Promise<void> {
+  const MyOctokit = Octokit.plugin(restEndpointMethods)
+  const octokit = new MyOctokit()
+
   const combined_repo = core.getInput('repository')
   const pull_number = core.getInput('pull_request_id')
 
