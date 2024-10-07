@@ -1,5 +1,5 @@
 import { Changelog } from './parse-pr.js'
-import { FileHound } from 'filehound'
+import FileHound from 'filehound'
 import { PullMeta } from './meta.js'
 import { readFileSync } from 'fs'
 import { ParsedArgs } from 'minimist'

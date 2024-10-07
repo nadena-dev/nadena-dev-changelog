@@ -91170,6 +91170,7 @@ var minimist = __nccwpck_require__(5871);
 var minimist_default = /*#__PURE__*/__nccwpck_require__.n(minimist);
 // EXTERNAL MODULE: ./node_modules/filehound/index.js
 var filehound = __nccwpck_require__(615);
+var filehound_default = /*#__PURE__*/__nccwpck_require__.n(filehound);
 // EXTERNAL MODULE: external "fs"
 var external_fs_ = __nccwpck_require__(7147);
 ;// CONCATENATED MODULE: ./src/update-changelogs.ts
@@ -91179,7 +91180,7 @@ const re_meta_file = /\/(\d+)\/meta\.json$/;
 const re_changelog = /\/(\d+)\/([a-zA-Z-]+)\.md$/;
 async function load_metadata(meta_path) {
     const pr_dict = {};
-    const files = await filehound.FileHound.create().paths(meta_path).find();
+    const files = await filehound_default().create().paths(meta_path).find();
     for (const file of files) {
         let match = re_meta_file.exec(file);
         if (match) {
