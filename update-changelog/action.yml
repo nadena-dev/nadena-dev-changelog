@@ -31,6 +31,12 @@ inputs:
   git-email:
     description: 'Git committer email'
     default: 'ci@nadena.dev'
+  language:
+    description: 'Language for changelog'
+    required: true
+  fallback-language:
+    description: 'Fallback language for changelog'
+    required: true
 
 # Define your outputs here.
 # outputs:
@@ -62,7 +68,8 @@ runs:
         ls -lR
         for file in ${{ inputs.changelog_file }}; do
           echo "Generating changelog for $file"
-          node $GITHUB_ACTION_PATH/../dist/index.js --command=update-changelog --meta=update-changelog-meta --changelog=update-changelog-wc/$file
+          node $GITHUB_ACTION_PATH/../dist/index.js --command=update-changelog --meta=update-changelog-meta --changelog=update-changelog-wc/$file \
+            --language=${{ inputs.language }} --fallback-language=${{ inputs.fallback-language }}
         done
       env:
         GITHUB_ACTION_PATH: ${{ github.action_path }}

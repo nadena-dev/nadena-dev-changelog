@@ -79,8 +79,8 @@ export async function update_changelog(args: ParsedArgs): Promise<void> {
   console.log('update_changelog')
   const meta_root = args['meta']
   const changelog = args['changelog']
-  const lang = args['lang']
-  const fallback_lang = args['fallback-lang']
+  const lang = args['language']
+  const fallback_lang = args['fallback-language']
 
   const metadata = await load_metadata(meta_root, lang, fallback_lang)
 
