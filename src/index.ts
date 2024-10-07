@@ -37,7 +37,7 @@ if (process.argv.length > 2) {
 
   switch (args['command']) {
     case 'update-changelog':
-      update_changelog(args)
+      await update_changelog(args)
       break
     default:
       console.error('Unknown command: ' + args['command'])

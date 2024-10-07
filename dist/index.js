@@ -85127,6 +85127,596 @@ exports["default"] = _default;
 
 /***/ }),
 
+/***/ 2441:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "_": () => (/* binding */ check_changelog)
+/* harmony export */ });
+/* harmony import */ var _octokit_action__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(7449);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _octokit_plugin_rest_endpoint_methods__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(2625);
+/* harmony import */ var _parse_pr_js__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(2799);
+
+
+
+
+const no_changelog = /^NO-CHANGELOG\s*$/m;
+async function check_changelog() {
+    const MyOctokit = _octokit_action__WEBPACK_IMPORTED_MODULE_1__/* .Octokit.plugin */ .vd.plugin(_octokit_plugin_rest_endpoint_methods__WEBPACK_IMPORTED_MODULE_2__/* .restEndpointMethods */ .T);
+    const octokit = new MyOctokit();
+    const combined_repo = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('repository');
+    const pull_number = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('pull_request_id');
+    const [owner, repo] = combined_repo.split('/');
+    const pull = await octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number: +pull_number
+    });
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug('body:\n' + JSON.stringify(pull.data, null, 2));
+    let body = pull.data.body ?? '';
+    body = (0,_parse_pr_js__WEBPACK_IMPORTED_MODULE_3__/* .strip_html_comments */ .A)(body);
+    const changelogs = (0,_parse_pr_js__WEBPACK_IMPORTED_MODULE_3__/* .extract_changelog */ .s)(body);
+    if (body.match(no_changelog)) {
+        if (changelogs.length > 0) {
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed('Found CHANGELOG in PR body, but PR body contains NO-CHANGELOG');
+        }
+    }
+    else {
+        for (const changelog of changelogs) {
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(`Found changelog in ${changelog.lang}:\n${changelog.body}`);
+        }
+        if (changelogs.length === 0) {
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed('No CHANGELOG found in the PR body');
+        }
+    }
+}
+
+
+/***/ }),
+
+/***/ 6144:
+/***/ ((module, __webpack_exports__, __nccwpck_require__) => {
+
+__nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "K": () => (/* binding */ run)
+/* harmony export */ });
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _check_changelog_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(2441);
+/* harmony import */ var _record_pr_changelog_js__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(8674);
+/* harmony import */ var minimist__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(5871);
+/* harmony import */ var minimist__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__nccwpck_require__.n(minimist__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _update_changelogs_js__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(5798);
+/**
+ * The entrypoint for the action.
+ */
+
+
+
+
+
+async function run() {
+    try {
+        const command = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('command');
+        switch (command) {
+            case 'check_changelog':
+                await (0,_check_changelog_js__WEBPACK_IMPORTED_MODULE_1__/* .check_changelog */ ._)();
+                break;
+            case 'record_pr_changelog':
+                await (0,_record_pr_changelog_js__WEBPACK_IMPORTED_MODULE_2__/* .record_pr_changelog */ .m)();
+                break;
+            default:
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed('Unknown command: ' + command);
+                break;
+        }
+    }
+    catch (error) {
+        // Fail the workflow run if an error occurs
+        if (error instanceof Error)
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(error.message);
+    }
+}
+console.log(JSON.stringify(process.argv, null, 2));
+if (process.argv.length > 2) {
+    const args = minimist__WEBPACK_IMPORTED_MODULE_3___default()(process.argv);
+    console.info(args);
+    switch (args['command']) {
+        case 'update-changelog':
+            await (0,_update_changelogs_js__WEBPACK_IMPORTED_MODULE_4__/* .update_changelog */ .s)(args);
+            break;
+        default:
+            console.error('Unknown command: ' + args['command']);
+            process.exit(1);
+            break;
+    }
+}
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+run();
+
+__webpack_async_result__();
+} catch(e) { __webpack_async_result__(e); } }, 1);
+
+/***/ }),
+
+/***/ 2799:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "A": () => (/* binding */ strip_html_comments),
+/* harmony export */   "s": () => (/* binding */ extract_changelog)
+/* harmony export */ });
+function strip_html_comments(body) {
+    return body.replace(/<!--[\s\S]*?-->/gm, '');
+}
+const changelog_regex = /^(`{3,})CHANGELOG-([a-zA-Z-]+)\s*?\n\s*([\s\S]+?\S)\s*?\n\s*\1\s*$/gm;
+function extract_changelog(body) {
+    const matches = [...body.matchAll(changelog_regex)];
+    return matches.map(match => {
+        return { lang: match[2], body: match[3] };
+    });
+}
+
+
+/***/ }),
+
+/***/ 8674:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+
+// EXPORTS
+__nccwpck_require__.d(__webpack_exports__, {
+  "m": () => (/* binding */ record_pr_changelog)
+});
+
+// EXTERNAL MODULE: ./node_modules/@octokit/action/dist-bundle/index.js + 14 modules
+var dist_bundle = __nccwpck_require__(7449);
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(2186);
+// EXTERNAL MODULE: ./node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js + 3 modules
+var dist_src = __nccwpck_require__(2625);
+// EXTERNAL MODULE: ./src/parse-pr.ts
+var parse_pr = __nccwpck_require__(2799);
+;// CONCATENATED MODULE: ./src/committer.ts
+
+const GIT_COMMITTER = core.getInput('git-committer');
+const GIT_EMAIL = core.getInput('git-email');
+const COMMITTER = {
+    name: GIT_COMMITTER,
+    email: GIT_EMAIL
+};
+
+;// CONCATENATED MODULE: ./node_modules/js-base64/base64.mjs
+/**
+ *  base64.ts
+ *
+ *  Licensed under the BSD 3-Clause License.
+ *    http://opensource.org/licenses/BSD-3-Clause
+ *
+ *  References:
+ *    http://en.wikipedia.org/wiki/Base64
+ *
+ * @author Dan Kogai (https://github.com/dankogai)
+ */
+const version = '3.7.7';
+/**
+ * @deprecated use lowercase `version`.
+ */
+const VERSION = version;
+const _hasBuffer = typeof Buffer === 'function';
+const _TD = typeof TextDecoder === 'function' ? new TextDecoder() : undefined;
+const _TE = typeof TextEncoder === 'function' ? new TextEncoder() : undefined;
+const b64ch = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+const b64chs = Array.prototype.slice.call(b64ch);
+const b64tab = ((a) => {
+    let tab = {};
+    a.forEach((c, i) => tab[c] = i);
+    return tab;
+})(b64chs);
+const b64re = /^(?:[A-Za-z\d+\/]{4})*?(?:[A-Za-z\d+\/]{2}(?:==)?|[A-Za-z\d+\/]{3}=?)?$/;
+const _fromCC = String.fromCharCode.bind(String);
+const _U8Afrom = typeof Uint8Array.from === 'function'
+    ? Uint8Array.from.bind(Uint8Array)
+    : (it) => new Uint8Array(Array.prototype.slice.call(it, 0));
+const _mkUriSafe = (src) => src
+    .replace(/=/g, '').replace(/[+\/]/g, (m0) => m0 == '+' ? '-' : '_');
+const _tidyB64 = (s) => s.replace(/[^A-Za-z0-9\+\/]/g, '');
+/**
+ * polyfill version of `btoa`
+ */
+const btoaPolyfill = (bin) => {
+    // console.log('polyfilled');
+    let u32, c0, c1, c2, asc = '';
+    const pad = bin.length % 3;
+    for (let i = 0; i < bin.length;) {
+        if ((c0 = bin.charCodeAt(i++)) > 255 ||
+            (c1 = bin.charCodeAt(i++)) > 255 ||
+            (c2 = bin.charCodeAt(i++)) > 255)
+            throw new TypeError('invalid character found');
+        u32 = (c0 << 16) | (c1 << 8) | c2;
+        asc += b64chs[u32 >> 18 & 63]
+            + b64chs[u32 >> 12 & 63]
+            + b64chs[u32 >> 6 & 63]
+            + b64chs[u32 & 63];
+    }
+    return pad ? asc.slice(0, pad - 3) + "===".substring(pad) : asc;
+};
+/**
+ * does what `window.btoa` of web browsers do.
+ * @param {String} bin binary string
+ * @returns {string} Base64-encoded string
+ */
+const _btoa = typeof btoa === 'function' ? (bin) => btoa(bin)
+    : _hasBuffer ? (bin) => Buffer.from(bin, 'binary').toString('base64')
+        : btoaPolyfill;
+const _fromUint8Array = _hasBuffer
+    ? (u8a) => Buffer.from(u8a).toString('base64')
+    : (u8a) => {
+        // cf. https://stackoverflow.com/questions/12710001/how-to-convert-uint8-array-to-base64-encoded-string/12713326#12713326
+        const maxargs = 0x1000;
+        let strs = [];
+        for (let i = 0, l = u8a.length; i < l; i += maxargs) {
+            strs.push(_fromCC.apply(null, u8a.subarray(i, i + maxargs)));
+        }
+        return _btoa(strs.join(''));
+    };
+/**
+ * converts a Uint8Array to a Base64 string.
+ * @param {boolean} [urlsafe] URL-and-filename-safe a la RFC4648 §5
+ * @returns {string} Base64 string
+ */
+const fromUint8Array = (u8a, urlsafe = false) => urlsafe ? _mkUriSafe(_fromUint8Array(u8a)) : _fromUint8Array(u8a);
+// This trick is found broken https://github.com/dankogai/js-base64/issues/130
+// const utob = (src: string) => unescape(encodeURIComponent(src));
+// reverting good old fationed regexp
+const cb_utob = (c) => {
+    if (c.length < 2) {
+        var cc = c.charCodeAt(0);
+        return cc < 0x80 ? c
+            : cc < 0x800 ? (_fromCC(0xc0 | (cc >>> 6))
+                + _fromCC(0x80 | (cc & 0x3f)))
+                : (_fromCC(0xe0 | ((cc >>> 12) & 0x0f))
+                    + _fromCC(0x80 | ((cc >>> 6) & 0x3f))
+                    + _fromCC(0x80 | (cc & 0x3f)));
+    }
+    else {
+        var cc = 0x10000
+            + (c.charCodeAt(0) - 0xD800) * 0x400
+            + (c.charCodeAt(1) - 0xDC00);
+        return (_fromCC(0xf0 | ((cc >>> 18) & 0x07))
+            + _fromCC(0x80 | ((cc >>> 12) & 0x3f))
+            + _fromCC(0x80 | ((cc >>> 6) & 0x3f))
+            + _fromCC(0x80 | (cc & 0x3f)));
+    }
+};
+const re_utob = /[\uD800-\uDBFF][\uDC00-\uDFFFF]|[^\x00-\x7F]/g;
+/**
+ * @deprecated should have been internal use only.
+ * @param {string} src UTF-8 string
+ * @returns {string} UTF-16 string
+ */
+const utob = (u) => u.replace(re_utob, cb_utob);
+//
+const _encode = _hasBuffer
+    ? (s) => Buffer.from(s, 'utf8').toString('base64')
+    : _TE
+        ? (s) => _fromUint8Array(_TE.encode(s))
+        : (s) => _btoa(utob(s));
+/**
+ * converts a UTF-8-encoded string to a Base64 string.
+ * @param {boolean} [urlsafe] if `true` make the result URL-safe
+ * @returns {string} Base64 string
+ */
+const encode = (src, urlsafe = false) => urlsafe
+    ? _mkUriSafe(_encode(src))
+    : _encode(src);
+/**
+ * converts a UTF-8-encoded string to URL-safe Base64 RFC4648 §5.
+ * @returns {string} Base64 string
+ */
+const base64_encodeURI = (src) => encode(src, true);
+// This trick is found broken https://github.com/dankogai/js-base64/issues/130
+// const btou = (src: string) => decodeURIComponent(escape(src));
+// reverting good old fationed regexp
+const re_btou = /[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF]{2}|[\xF0-\xF7][\x80-\xBF]{3}/g;
+const cb_btou = (cccc) => {
+    switch (cccc.length) {
+        case 4:
+            var cp = ((0x07 & cccc.charCodeAt(0)) << 18)
+                | ((0x3f & cccc.charCodeAt(1)) << 12)
+                | ((0x3f & cccc.charCodeAt(2)) << 6)
+                | (0x3f & cccc.charCodeAt(3)), offset = cp - 0x10000;
+            return (_fromCC((offset >>> 10) + 0xD800)
+                + _fromCC((offset & 0x3FF) + 0xDC00));
+        case 3:
+            return _fromCC(((0x0f & cccc.charCodeAt(0)) << 12)
+                | ((0x3f & cccc.charCodeAt(1)) << 6)
+                | (0x3f & cccc.charCodeAt(2)));
+        default:
+            return _fromCC(((0x1f & cccc.charCodeAt(0)) << 6)
+                | (0x3f & cccc.charCodeAt(1)));
+    }
+};
+/**
+ * @deprecated should have been internal use only.
+ * @param {string} src UTF-16 string
+ * @returns {string} UTF-8 string
+ */
+const btou = (b) => b.replace(re_btou, cb_btou);
+/**
+ * polyfill version of `atob`
+ */
+const atobPolyfill = (asc) => {
+    // console.log('polyfilled');
+    asc = asc.replace(/\s+/g, '');
+    if (!b64re.test(asc))
+        throw new TypeError('malformed base64.');
+    asc += '=='.slice(2 - (asc.length & 3));
+    let u24, bin = '', r1, r2;
+    for (let i = 0; i < asc.length;) {
+        u24 = b64tab[asc.charAt(i++)] << 18
+            | b64tab[asc.charAt(i++)] << 12
+            | (r1 = b64tab[asc.charAt(i++)]) << 6
+            | (r2 = b64tab[asc.charAt(i++)]);
+        bin += r1 === 64 ? _fromCC(u24 >> 16 & 255)
+            : r2 === 64 ? _fromCC(u24 >> 16 & 255, u24 >> 8 & 255)
+                : _fromCC(u24 >> 16 & 255, u24 >> 8 & 255, u24 & 255);
+    }
+    return bin;
+};
+/**
+ * does what `window.atob` of web browsers do.
+ * @param {String} asc Base64-encoded string
+ * @returns {string} binary string
+ */
+const _atob = typeof atob === 'function' ? (asc) => atob(_tidyB64(asc))
+    : _hasBuffer ? (asc) => Buffer.from(asc, 'base64').toString('binary')
+        : atobPolyfill;
+//
+const _toUint8Array = _hasBuffer
+    ? (a) => _U8Afrom(Buffer.from(a, 'base64'))
+    : (a) => _U8Afrom(_atob(a).split('').map(c => c.charCodeAt(0)));
+/**
+ * converts a Base64 string to a Uint8Array.
+ */
+const toUint8Array = (a) => _toUint8Array(_unURI(a));
+//
+const _decode = _hasBuffer
+    ? (a) => Buffer.from(a, 'base64').toString('utf8')
+    : _TD
+        ? (a) => _TD.decode(_toUint8Array(a))
+        : (a) => btou(_atob(a));
+const _unURI = (a) => _tidyB64(a.replace(/[-_]/g, (m0) => m0 == '-' ? '+' : '/'));
+/**
+ * converts a Base64 string to a UTF-8 string.
+ * @param {String} src Base64 string.  Both normal and URL-safe are supported
+ * @returns {string} UTF-8 string
+ */
+const decode = (src) => _decode(_unURI(src));
+/**
+ * check if a value is a valid Base64 string
+ * @param {String} src a value to check
+  */
+const isValid = (src) => {
+    if (typeof src !== 'string')
+        return false;
+    const s = src.replace(/\s+/g, '').replace(/={0,2}$/, '');
+    return !/[^\s0-9a-zA-Z\+/]/.test(s) || !/[^\s0-9a-zA-Z\-_]/.test(s);
+};
+//
+const _noEnum = (v) => {
+    return {
+        value: v, enumerable: false, writable: true, configurable: true
+    };
+};
+/**
+ * extend String.prototype with relevant methods
+ */
+const extendString = function () {
+    const _add = (name, body) => Object.defineProperty(String.prototype, name, _noEnum(body));
+    _add('fromBase64', function () { return decode(this); });
+    _add('toBase64', function (urlsafe) { return encode(this, urlsafe); });
+    _add('toBase64URI', function () { return encode(this, true); });
+    _add('toBase64URL', function () { return encode(this, true); });
+    _add('toUint8Array', function () { return toUint8Array(this); });
+};
+/**
+ * extend Uint8Array.prototype with relevant methods
+ */
+const extendUint8Array = function () {
+    const _add = (name, body) => Object.defineProperty(Uint8Array.prototype, name, _noEnum(body));
+    _add('toBase64', function (urlsafe) { return fromUint8Array(this, urlsafe); });
+    _add('toBase64URI', function () { return fromUint8Array(this, true); });
+    _add('toBase64URL', function () { return fromUint8Array(this, true); });
+};
+/**
+ * extend Builtin prototypes with relevant methods
+ */
+const extendBuiltins = () => {
+    extendString();
+    extendUint8Array();
+};
+const gBase64 = {
+    version: version,
+    VERSION: VERSION,
+    atob: _atob,
+    atobPolyfill: atobPolyfill,
+    btoa: _btoa,
+    btoaPolyfill: btoaPolyfill,
+    fromBase64: decode,
+    toBase64: encode,
+    encode: encode,
+    encodeURI: base64_encodeURI,
+    encodeURL: base64_encodeURI,
+    utob: utob,
+    btou: btou,
+    decode: decode,
+    isValid: isValid,
+    fromUint8Array: fromUint8Array,
+    toUint8Array: toUint8Array,
+    extendString: extendString,
+    extendUint8Array: extendUint8Array,
+    extendBuiltins: extendBuiltins
+};
+// makecjs:CUT //
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// and finally,
+
+
+;// CONCATENATED MODULE: ./src/record-pr-changelog.ts
+
+
+
+
+
+
+const no_changelog = /^NO-CHANGELOG\s*$/m;
+const prerel_only = /^CHANGELOG:\s*prerelease-only\s*$/m;
+const heading_re = /^\s*?#+?\s*?(\s.+?)\s*?\n+?/m;
+async function write_one(octokit, path, content) {
+    const combined_repo = core.getInput('repository');
+    const [owner, repo] = combined_repo.split('/');
+    console.log(`Writing ${path} to ${owner}/${repo}:meta-changelog; contents:\n${content}`);
+    await octokit.rest.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path,
+        branch: 'meta-changelog',
+        message: 'Ingest changelog',
+        content: gBase64.encode(content),
+        committer: COMMITTER
+    });
+}
+async function record_pr_changelog() {
+    const MyOctokit = dist_bundle/* Octokit.plugin */.vd.plugin(dist_src/* restEndpointMethods */.T);
+    const octokit = new MyOctokit();
+    const combined_repo = core.getInput('repository');
+    const pull_number = core.getInput('pull_request_id');
+    const [owner, repo] = combined_repo.split('/');
+    const pull = await octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number: +pull_number
+    });
+    core.debug('body:\n' + JSON.stringify(pull.data, null, 2));
+    if (!pull.data.merged) {
+        console.log('PR not merged - skipping');
+        return;
+    }
+    let body = pull.data.body ?? '';
+    body = (0,parse_pr/* strip_html_comments */.A)(body);
+    const changelogs = (0,parse_pr/* extract_changelog */.s)(body);
+    if (body.match(no_changelog)) {
+        if (changelogs.length > 0) {
+            core.setFailed('Found CHANGELOG in PR body, but PR body contains NO-CHANGELOG');
+        }
+        return;
+    }
+    else {
+        for (const changelog of changelogs) {
+            core.debug(`Found changelog in ${changelog.lang}:\n${changelog.body}`);
+        }
+        if (changelogs.length === 0) {
+            core.setFailed('No CHANGELOG found in the PR body');
+        }
+    }
+    let heading = null;
+    const is_prerelease_only = body.match(prerel_only);
+    for (const changelog of changelogs) {
+        const processed = changelog.body.replace(heading_re, match => {
+            if (changelog.lang == 'en-US') {
+                heading = match.trim();
+            }
+            return '';
+        });
+        await write_one(octokit, `pr/${pull_number}/${changelog.lang}.md`, processed);
+    }
+    const meta = { tags: [] };
+    if (is_prerelease_only) {
+        meta.tags.push('prerelease-only');
+    }
+    if (heading !== null) {
+        meta.heading = heading;
+    }
+    await write_one(octokit, `pr/${pull_number}/meta.json`, JSON.stringify(meta, null, 2));
+}
+
+
+/***/ }),
+
+/***/ 5798:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "s": () => (/* binding */ update_changelog)
+/* harmony export */ });
+/* harmony import */ var filehound__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(615);
+/* harmony import */ var filehound__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(filehound__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var fs__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(7147);
+/* harmony import */ var fs__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(fs__WEBPACK_IMPORTED_MODULE_1__);
+
+
+const re_meta_file = /\/(\d+)\/meta\.json$/;
+const re_changelog = /\/(\d+)\/([a-zA-Z-]+)\.md$/;
+async function load_metadata(meta_path) {
+    const pr_dict = {};
+    const files = await filehound__WEBPACK_IMPORTED_MODULE_0___default().create().paths(meta_path).find();
+    for (const file of files) {
+        let match = re_meta_file.exec(file);
+        if (match) {
+            const pr_number = match[1];
+            const meta = JSON.parse(file);
+            if (!pr_dict[pr_number]) {
+                pr_dict[pr_number] = { changelogs: {} };
+            }
+            pr_dict[pr_number].meta = meta;
+        }
+        match = re_changelog.exec(file);
+        if (match) {
+            const pr_number = match[1];
+            const lang = match[2];
+            // read file
+            const body = (0,fs__WEBPACK_IMPORTED_MODULE_1__.readFileSync)(file, 'utf8');
+            if (!pr_dict[pr_number]) {
+                pr_dict[pr_number] = { changelogs: {} };
+            }
+            pr_dict[pr_number].changelogs[lang] = { lang, body };
+        }
+    }
+    return pr_dict;
+}
+async function update_changelog(args) {
+    console.log('update_changelog');
+    const meta_root = args['meta'];
+    //const changelog = args['changelog']
+    const metadata = load_metadata(meta_root);
+    console.log(JSON.stringify(metadata, null, 2));
+}
+
+
+/***/ }),
+
 /***/ 9491:
 /***/ ((module) => {
 
@@ -87053,98 +87643,19 @@ function parseParams (str) {
 module.exports = parseParams
 
 
-/***/ })
+/***/ }),
 
-/******/ });
-/************************************************************************/
-/******/ // The module cache
-/******/ var __webpack_module_cache__ = {};
-/******/ 
-/******/ // The require function
-/******/ function __nccwpck_require__(moduleId) {
-/******/ 	// Check if module is in cache
-/******/ 	var cachedModule = __webpack_module_cache__[moduleId];
-/******/ 	if (cachedModule !== undefined) {
-/******/ 		return cachedModule.exports;
-/******/ 	}
-/******/ 	// Create a new module (and put it into the cache)
-/******/ 	var module = __webpack_module_cache__[moduleId] = {
-/******/ 		id: moduleId,
-/******/ 		loaded: false,
-/******/ 		exports: {}
-/******/ 	};
-/******/ 
-/******/ 	// Execute the module function
-/******/ 	var threw = true;
-/******/ 	try {
-/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __nccwpck_require__);
-/******/ 		threw = false;
-/******/ 	} finally {
-/******/ 		if(threw) delete __webpack_module_cache__[moduleId];
-/******/ 	}
-/******/ 
-/******/ 	// Flag the module as loaded
-/******/ 	module.loaded = true;
-/******/ 
-/******/ 	// Return the exports of the module
-/******/ 	return module.exports;
-/******/ }
-/******/ 
-/************************************************************************/
-/******/ /* webpack/runtime/compat get default export */
-/******/ (() => {
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__nccwpck_require__.n = (module) => {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			() => (module['default']) :
-/******/ 			() => (module);
-/******/ 		__nccwpck_require__.d(getter, { a: getter });
-/******/ 		return getter;
-/******/ 	};
-/******/ })();
-/******/ 
-/******/ /* webpack/runtime/define property getters */
-/******/ (() => {
-/******/ 	// define getter functions for harmony exports
-/******/ 	__nccwpck_require__.d = (exports, definition) => {
-/******/ 		for(var key in definition) {
-/******/ 			if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
-/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 			}
-/******/ 		}
-/******/ 	};
-/******/ })();
-/******/ 
-/******/ /* webpack/runtime/hasOwnProperty shorthand */
-/******/ (() => {
-/******/ 	__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ })();
-/******/ 
-/******/ /* webpack/runtime/node module decorator */
-/******/ (() => {
-/******/ 	__nccwpck_require__.nmd = (module) => {
-/******/ 		module.paths = [];
-/******/ 		if (!module.children) module.children = [];
-/******/ 		return module;
-/******/ 	};
-/******/ })();
-/******/ 
-/******/ /* webpack/runtime/compat */
-/******/ 
-/******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = new URL('.', import.meta.url).pathname.slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
-/******/ 
-/************************************************************************/
-var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
-(() => {
+/***/ 7449:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
+
 
 // EXPORTS
 __nccwpck_require__.d(__webpack_exports__, {
-  "K": () => (/* binding */ run)
+  "vd": () => (/* binding */ dist_bundle_Octokit)
 });
 
-// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
-var core = __nccwpck_require__(2186);
+// UNUSED EXPORTS: customFetch, getProxyAgent
+
 ;// CONCATENATED MODULE: ./node_modules/universal-user-agent/index.js
 function getUserAgent() {
   if (typeof navigator === "object" && "userAgent" in navigator) {
@@ -88586,8 +89097,76 @@ function paginateRest(octokit) {
 paginateRest.VERSION = plugin_paginate_rest_dist_bundle_VERSION;
 
 
+// EXTERNAL MODULE: ./node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js + 3 modules
+var dist_src = __nccwpck_require__(2625);
+// EXTERNAL MODULE: ./node_modules/@octokit/action/node_modules/undici/index.js
+var undici = __nccwpck_require__(2022);
+;// CONCATENATED MODULE: ./node_modules/@octokit/action/dist-bundle/index.js
+// pkg/dist-src/index.js
+
+
+
+
+
+
+// pkg/dist-src/version.js
+var action_dist_bundle_VERSION = "0.0.0-development";
+
+// pkg/dist-src/index.js
+var dist_bundle_DEFAULTS = {
+  authStrategy: createActionAuth,
+  baseUrl: getApiBaseUrl(),
+  userAgent: `octokit-action.js/${action_dist_bundle_VERSION}`
+};
+function getProxyAgent() {
+  const httpProxy = process.env["HTTP_PROXY"] || process.env["http_proxy"];
+  if (httpProxy) {
+    return new undici/* ProxyAgent */.nE(httpProxy);
+  }
+  const httpsProxy = process.env["HTTPS_PROXY"] || process.env["https_proxy"];
+  if (httpsProxy) {
+    return new undici/* ProxyAgent */.nE(httpsProxy);
+  }
+  return void 0;
+}
+var customFetch = async function(url, opts) {
+  return await (0,undici/* fetch */.he)(url, {
+    dispatcher: getProxyAgent(),
+    ...opts
+  });
+};
+var dist_bundle_Octokit = Octokit.plugin(paginateRest, dist_src/* legacyRestEndpointMethods */.t).defaults(
+  function buildDefaults(options) {
+    return {
+      ...dist_bundle_DEFAULTS,
+      ...options,
+      request: {
+        fetch: customFetch,
+        ...options.request
+      }
+    };
+  }
+);
+function getApiBaseUrl() {
+  return process.env["GITHUB_API_URL"] || "https://api.github.com";
+}
+
+
+
+/***/ }),
+
+/***/ 2625:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
+
+
+// EXPORTS
+__nccwpck_require__.d(__webpack_exports__, {
+  "t": () => (/* binding */ legacyRestEndpointMethods),
+  "T": () => (/* binding */ restEndpointMethods)
+});
+
 ;// CONCATENATED MODULE: ./node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
-const dist_src_version_VERSION = "13.2.6";
+const VERSION = "13.2.6";
 
 //# sourceMappingURL=version.js.map
 
@@ -90669,7 +91248,7 @@ function restEndpointMethods(octokit) {
     rest: api
   };
 }
-restEndpointMethods.VERSION = dist_src_version_VERSION;
+restEndpointMethods.VERSION = VERSION;
 function legacyRestEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -90677,591 +91256,169 @@ function legacyRestEndpointMethods(octokit) {
     rest: api
   };
 }
-legacyRestEndpointMethods.VERSION = dist_src_version_VERSION;
+legacyRestEndpointMethods.VERSION = VERSION;
 
 //# sourceMappingURL=index.js.map
 
-// EXTERNAL MODULE: ./node_modules/@octokit/action/node_modules/undici/index.js
-var undici = __nccwpck_require__(2022);
-;// CONCATENATED MODULE: ./node_modules/@octokit/action/dist-bundle/index.js
-// pkg/dist-src/index.js
 
+/***/ })
 
-
-
-
-
-// pkg/dist-src/version.js
-var action_dist_bundle_VERSION = "0.0.0-development";
-
-// pkg/dist-src/index.js
-var dist_bundle_DEFAULTS = {
-  authStrategy: createActionAuth,
-  baseUrl: getApiBaseUrl(),
-  userAgent: `octokit-action.js/${action_dist_bundle_VERSION}`
-};
-function getProxyAgent() {
-  const httpProxy = process.env["HTTP_PROXY"] || process.env["http_proxy"];
-  if (httpProxy) {
-    return new undici/* ProxyAgent */.nE(httpProxy);
-  }
-  const httpsProxy = process.env["HTTPS_PROXY"] || process.env["https_proxy"];
-  if (httpsProxy) {
-    return new undici/* ProxyAgent */.nE(httpsProxy);
-  }
-  return void 0;
-}
-var customFetch = async function(url, opts) {
-  return await (0,undici/* fetch */.he)(url, {
-    dispatcher: getProxyAgent(),
-    ...opts
-  });
-};
-var dist_bundle_Octokit = Octokit.plugin(paginateRest, legacyRestEndpointMethods).defaults(
-  function buildDefaults(options) {
-    return {
-      ...dist_bundle_DEFAULTS,
-      ...options,
-      request: {
-        fetch: customFetch,
-        ...options.request
-      }
-    };
-  }
-);
-function getApiBaseUrl() {
-  return process.env["GITHUB_API_URL"] || "https://api.github.com";
-}
-
-
-;// CONCATENATED MODULE: ./src/parse-pr.ts
-function strip_html_comments(body) {
-    return body.replace(/<!--[\s\S]*?-->/gm, '');
-}
-const changelog_regex = /^(`{3,})CHANGELOG-([a-zA-Z-]+)\s*?\n\s*([\s\S]+?\S)\s*?\n\s*\1\s*$/gm;
-function extract_changelog(body) {
-    const matches = [...body.matchAll(changelog_regex)];
-    return matches.map(match => {
-        return { lang: match[2], body: match[3] };
-    });
-}
-
-;// CONCATENATED MODULE: ./src/check-changelog.ts
-
-
-
-
-const no_changelog = /^NO-CHANGELOG\s*$/m;
-async function check_changelog() {
-    const MyOctokit = dist_bundle_Octokit.plugin(restEndpointMethods);
-    const octokit = new MyOctokit();
-    const combined_repo = core.getInput('repository');
-    const pull_number = core.getInput('pull_request_id');
-    const [owner, repo] = combined_repo.split('/');
-    const pull = await octokit.rest.pulls.get({
-        owner,
-        repo,
-        pull_number: +pull_number
-    });
-    core.debug('body:\n' + JSON.stringify(pull.data, null, 2));
-    let body = pull.data.body ?? '';
-    body = strip_html_comments(body);
-    const changelogs = extract_changelog(body);
-    if (body.match(no_changelog)) {
-        if (changelogs.length > 0) {
-            core.setFailed('Found CHANGELOG in PR body, but PR body contains NO-CHANGELOG');
-        }
-    }
-    else {
-        for (const changelog of changelogs) {
-            core.debug(`Found changelog in ${changelog.lang}:\n${changelog.body}`);
-        }
-        if (changelogs.length === 0) {
-            core.setFailed('No CHANGELOG found in the PR body');
-        }
-    }
-}
-
-;// CONCATENATED MODULE: ./src/committer.ts
-
-const GIT_COMMITTER = core.getInput('git-committer');
-const GIT_EMAIL = core.getInput('git-email');
-const COMMITTER = {
-    name: GIT_COMMITTER,
-    email: GIT_EMAIL
-};
-
-;// CONCATENATED MODULE: ./node_modules/js-base64/base64.mjs
-/**
- *  base64.ts
- *
- *  Licensed under the BSD 3-Clause License.
- *    http://opensource.org/licenses/BSD-3-Clause
- *
- *  References:
- *    http://en.wikipedia.org/wiki/Base64
- *
- * @author Dan Kogai (https://github.com/dankogai)
- */
-const version = '3.7.7';
-/**
- * @deprecated use lowercase `version`.
- */
-const base64_VERSION = version;
-const _hasBuffer = typeof Buffer === 'function';
-const _TD = typeof TextDecoder === 'function' ? new TextDecoder() : undefined;
-const _TE = typeof TextEncoder === 'function' ? new TextEncoder() : undefined;
-const b64ch = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-const b64chs = Array.prototype.slice.call(b64ch);
-const b64tab = ((a) => {
-    let tab = {};
-    a.forEach((c, i) => tab[c] = i);
-    return tab;
-})(b64chs);
-const b64re = /^(?:[A-Za-z\d+\/]{4})*?(?:[A-Za-z\d+\/]{2}(?:==)?|[A-Za-z\d+\/]{3}=?)?$/;
-const _fromCC = String.fromCharCode.bind(String);
-const _U8Afrom = typeof Uint8Array.from === 'function'
-    ? Uint8Array.from.bind(Uint8Array)
-    : (it) => new Uint8Array(Array.prototype.slice.call(it, 0));
-const _mkUriSafe = (src) => src
-    .replace(/=/g, '').replace(/[+\/]/g, (m0) => m0 == '+' ? '-' : '_');
-const _tidyB64 = (s) => s.replace(/[^A-Za-z0-9\+\/]/g, '');
-/**
- * polyfill version of `btoa`
- */
-const btoaPolyfill = (bin) => {
-    // console.log('polyfilled');
-    let u32, c0, c1, c2, asc = '';
-    const pad = bin.length % 3;
-    for (let i = 0; i < bin.length;) {
-        if ((c0 = bin.charCodeAt(i++)) > 255 ||
-            (c1 = bin.charCodeAt(i++)) > 255 ||
-            (c2 = bin.charCodeAt(i++)) > 255)
-            throw new TypeError('invalid character found');
-        u32 = (c0 << 16) | (c1 << 8) | c2;
-        asc += b64chs[u32 >> 18 & 63]
-            + b64chs[u32 >> 12 & 63]
-            + b64chs[u32 >> 6 & 63]
-            + b64chs[u32 & 63];
-    }
-    return pad ? asc.slice(0, pad - 3) + "===".substring(pad) : asc;
-};
-/**
- * does what `window.btoa` of web browsers do.
- * @param {String} bin binary string
- * @returns {string} Base64-encoded string
- */
-const _btoa = typeof btoa === 'function' ? (bin) => btoa(bin)
-    : _hasBuffer ? (bin) => Buffer.from(bin, 'binary').toString('base64')
-        : btoaPolyfill;
-const _fromUint8Array = _hasBuffer
-    ? (u8a) => Buffer.from(u8a).toString('base64')
-    : (u8a) => {
-        // cf. https://stackoverflow.com/questions/12710001/how-to-convert-uint8-array-to-base64-encoded-string/12713326#12713326
-        const maxargs = 0x1000;
-        let strs = [];
-        for (let i = 0, l = u8a.length; i < l; i += maxargs) {
-            strs.push(_fromCC.apply(null, u8a.subarray(i, i + maxargs)));
-        }
-        return _btoa(strs.join(''));
-    };
-/**
- * converts a Uint8Array to a Base64 string.
- * @param {boolean} [urlsafe] URL-and-filename-safe a la RFC4648 §5
- * @returns {string} Base64 string
- */
-const fromUint8Array = (u8a, urlsafe = false) => urlsafe ? _mkUriSafe(_fromUint8Array(u8a)) : _fromUint8Array(u8a);
-// This trick is found broken https://github.com/dankogai/js-base64/issues/130
-// const utob = (src: string) => unescape(encodeURIComponent(src));
-// reverting good old fationed regexp
-const cb_utob = (c) => {
-    if (c.length < 2) {
-        var cc = c.charCodeAt(0);
-        return cc < 0x80 ? c
-            : cc < 0x800 ? (_fromCC(0xc0 | (cc >>> 6))
-                + _fromCC(0x80 | (cc & 0x3f)))
-                : (_fromCC(0xe0 | ((cc >>> 12) & 0x0f))
-                    + _fromCC(0x80 | ((cc >>> 6) & 0x3f))
-                    + _fromCC(0x80 | (cc & 0x3f)));
-    }
-    else {
-        var cc = 0x10000
-            + (c.charCodeAt(0) - 0xD800) * 0x400
-            + (c.charCodeAt(1) - 0xDC00);
-        return (_fromCC(0xf0 | ((cc >>> 18) & 0x07))
-            + _fromCC(0x80 | ((cc >>> 12) & 0x3f))
-            + _fromCC(0x80 | ((cc >>> 6) & 0x3f))
-            + _fromCC(0x80 | (cc & 0x3f)));
-    }
-};
-const re_utob = /[\uD800-\uDBFF][\uDC00-\uDFFFF]|[^\x00-\x7F]/g;
-/**
- * @deprecated should have been internal use only.
- * @param {string} src UTF-8 string
- * @returns {string} UTF-16 string
- */
-const utob = (u) => u.replace(re_utob, cb_utob);
-//
-const _encode = _hasBuffer
-    ? (s) => Buffer.from(s, 'utf8').toString('base64')
-    : _TE
-        ? (s) => _fromUint8Array(_TE.encode(s))
-        : (s) => _btoa(utob(s));
-/**
- * converts a UTF-8-encoded string to a Base64 string.
- * @param {boolean} [urlsafe] if `true` make the result URL-safe
- * @returns {string} Base64 string
- */
-const encode = (src, urlsafe = false) => urlsafe
-    ? _mkUriSafe(_encode(src))
-    : _encode(src);
-/**
- * converts a UTF-8-encoded string to URL-safe Base64 RFC4648 §5.
- * @returns {string} Base64 string
- */
-const base64_encodeURI = (src) => encode(src, true);
-// This trick is found broken https://github.com/dankogai/js-base64/issues/130
-// const btou = (src: string) => decodeURIComponent(escape(src));
-// reverting good old fationed regexp
-const re_btou = /[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF]{2}|[\xF0-\xF7][\x80-\xBF]{3}/g;
-const cb_btou = (cccc) => {
-    switch (cccc.length) {
-        case 4:
-            var cp = ((0x07 & cccc.charCodeAt(0)) << 18)
-                | ((0x3f & cccc.charCodeAt(1)) << 12)
-                | ((0x3f & cccc.charCodeAt(2)) << 6)
-                | (0x3f & cccc.charCodeAt(3)), offset = cp - 0x10000;
-            return (_fromCC((offset >>> 10) + 0xD800)
-                + _fromCC((offset & 0x3FF) + 0xDC00));
-        case 3:
-            return _fromCC(((0x0f & cccc.charCodeAt(0)) << 12)
-                | ((0x3f & cccc.charCodeAt(1)) << 6)
-                | (0x3f & cccc.charCodeAt(2)));
-        default:
-            return _fromCC(((0x1f & cccc.charCodeAt(0)) << 6)
-                | (0x3f & cccc.charCodeAt(1)));
-    }
-};
-/**
- * @deprecated should have been internal use only.
- * @param {string} src UTF-16 string
- * @returns {string} UTF-8 string
- */
-const btou = (b) => b.replace(re_btou, cb_btou);
-/**
- * polyfill version of `atob`
- */
-const atobPolyfill = (asc) => {
-    // console.log('polyfilled');
-    asc = asc.replace(/\s+/g, '');
-    if (!b64re.test(asc))
-        throw new TypeError('malformed base64.');
-    asc += '=='.slice(2 - (asc.length & 3));
-    let u24, bin = '', r1, r2;
-    for (let i = 0; i < asc.length;) {
-        u24 = b64tab[asc.charAt(i++)] << 18
-            | b64tab[asc.charAt(i++)] << 12
-            | (r1 = b64tab[asc.charAt(i++)]) << 6
-            | (r2 = b64tab[asc.charAt(i++)]);
-        bin += r1 === 64 ? _fromCC(u24 >> 16 & 255)
-            : r2 === 64 ? _fromCC(u24 >> 16 & 255, u24 >> 8 & 255)
-                : _fromCC(u24 >> 16 & 255, u24 >> 8 & 255, u24 & 255);
-    }
-    return bin;
-};
-/**
- * does what `window.atob` of web browsers do.
- * @param {String} asc Base64-encoded string
- * @returns {string} binary string
- */
-const _atob = typeof atob === 'function' ? (asc) => atob(_tidyB64(asc))
-    : _hasBuffer ? (asc) => Buffer.from(asc, 'base64').toString('binary')
-        : atobPolyfill;
-//
-const _toUint8Array = _hasBuffer
-    ? (a) => _U8Afrom(Buffer.from(a, 'base64'))
-    : (a) => _U8Afrom(_atob(a).split('').map(c => c.charCodeAt(0)));
-/**
- * converts a Base64 string to a Uint8Array.
- */
-const toUint8Array = (a) => _toUint8Array(_unURI(a));
-//
-const _decode = _hasBuffer
-    ? (a) => Buffer.from(a, 'base64').toString('utf8')
-    : _TD
-        ? (a) => _TD.decode(_toUint8Array(a))
-        : (a) => btou(_atob(a));
-const _unURI = (a) => _tidyB64(a.replace(/[-_]/g, (m0) => m0 == '-' ? '+' : '/'));
-/**
- * converts a Base64 string to a UTF-8 string.
- * @param {String} src Base64 string.  Both normal and URL-safe are supported
- * @returns {string} UTF-8 string
- */
-const decode = (src) => _decode(_unURI(src));
-/**
- * check if a value is a valid Base64 string
- * @param {String} src a value to check
-  */
-const isValid = (src) => {
-    if (typeof src !== 'string')
-        return false;
-    const s = src.replace(/\s+/g, '').replace(/={0,2}$/, '');
-    return !/[^\s0-9a-zA-Z\+/]/.test(s) || !/[^\s0-9a-zA-Z\-_]/.test(s);
-};
-//
-const _noEnum = (v) => {
-    return {
-        value: v, enumerable: false, writable: true, configurable: true
-    };
-};
-/**
- * extend String.prototype with relevant methods
- */
-const extendString = function () {
-    const _add = (name, body) => Object.defineProperty(String.prototype, name, _noEnum(body));
-    _add('fromBase64', function () { return decode(this); });
-    _add('toBase64', function (urlsafe) { return encode(this, urlsafe); });
-    _add('toBase64URI', function () { return encode(this, true); });
-    _add('toBase64URL', function () { return encode(this, true); });
-    _add('toUint8Array', function () { return toUint8Array(this); });
-};
-/**
- * extend Uint8Array.prototype with relevant methods
- */
-const extendUint8Array = function () {
-    const _add = (name, body) => Object.defineProperty(Uint8Array.prototype, name, _noEnum(body));
-    _add('toBase64', function (urlsafe) { return fromUint8Array(this, urlsafe); });
-    _add('toBase64URI', function () { return fromUint8Array(this, true); });
-    _add('toBase64URL', function () { return fromUint8Array(this, true); });
-};
-/**
- * extend Builtin prototypes with relevant methods
- */
-const extendBuiltins = () => {
-    extendString();
-    extendUint8Array();
-};
-const gBase64 = {
-    version: version,
-    VERSION: base64_VERSION,
-    atob: _atob,
-    atobPolyfill: atobPolyfill,
-    btoa: _btoa,
-    btoaPolyfill: btoaPolyfill,
-    fromBase64: decode,
-    toBase64: encode,
-    encode: encode,
-    encodeURI: base64_encodeURI,
-    encodeURL: base64_encodeURI,
-    utob: utob,
-    btou: btou,
-    decode: decode,
-    isValid: isValid,
-    fromUint8Array: fromUint8Array,
-    toUint8Array: toUint8Array,
-    extendString: extendString,
-    extendUint8Array: extendUint8Array,
-    extendBuiltins: extendBuiltins
-};
-// makecjs:CUT //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// and finally,
-
-
-;// CONCATENATED MODULE: ./src/record-pr-changelog.ts
-
-
-
-
-
-
-const record_pr_changelog_no_changelog = /^NO-CHANGELOG\s*$/m;
-const prerel_only = /^CHANGELOG:\s*prerelease-only\s*$/m;
-const heading_re = /^\s*?#+?\s*?(\s.+?)\s*?\n+?/m;
-async function write_one(octokit, path, content) {
-    const combined_repo = core.getInput('repository');
-    const [owner, repo] = combined_repo.split('/');
-    console.log(`Writing ${path} to ${owner}/${repo}:meta-changelog; contents:\n${content}`);
-    await octokit.rest.repos.createOrUpdateFileContents({
-        owner,
-        repo,
-        path,
-        branch: 'meta-changelog',
-        message: 'Ingest changelog',
-        content: gBase64.encode(content),
-        committer: COMMITTER
-    });
-}
-async function record_pr_changelog() {
-    const MyOctokit = dist_bundle_Octokit.plugin(restEndpointMethods);
-    const octokit = new MyOctokit();
-    const combined_repo = core.getInput('repository');
-    const pull_number = core.getInput('pull_request_id');
-    const [owner, repo] = combined_repo.split('/');
-    const pull = await octokit.rest.pulls.get({
-        owner,
-        repo,
-        pull_number: +pull_number
-    });
-    core.debug('body:\n' + JSON.stringify(pull.data, null, 2));
-    if (!pull.data.merged) {
-        console.log('PR not merged - skipping');
-        return;
-    }
-    let body = pull.data.body ?? '';
-    body = strip_html_comments(body);
-    const changelogs = extract_changelog(body);
-    if (body.match(record_pr_changelog_no_changelog)) {
-        if (changelogs.length > 0) {
-            core.setFailed('Found CHANGELOG in PR body, but PR body contains NO-CHANGELOG');
-        }
-        return;
-    }
-    else {
-        for (const changelog of changelogs) {
-            core.debug(`Found changelog in ${changelog.lang}:\n${changelog.body}`);
-        }
-        if (changelogs.length === 0) {
-            core.setFailed('No CHANGELOG found in the PR body');
-        }
-    }
-    let heading = null;
-    const is_prerelease_only = body.match(prerel_only);
-    for (const changelog of changelogs) {
-        const processed = changelog.body.replace(heading_re, match => {
-            if (changelog.lang == 'en-US') {
-                heading = match.trim();
-            }
-            return '';
-        });
-        await write_one(octokit, `pr/${pull_number}/${changelog.lang}.md`, processed);
-    }
-    const meta = { tags: [] };
-    if (is_prerelease_only) {
-        meta.tags.push('prerelease-only');
-    }
-    if (heading !== null) {
-        meta.heading = heading;
-    }
-    await write_one(octokit, `pr/${pull_number}/meta.json`, JSON.stringify(meta, null, 2));
-}
-
-// EXTERNAL MODULE: ./node_modules/minimist/index.js
-var minimist = __nccwpck_require__(5871);
-var minimist_default = /*#__PURE__*/__nccwpck_require__.n(minimist);
-// EXTERNAL MODULE: ./node_modules/filehound/index.js
-var filehound = __nccwpck_require__(615);
-var filehound_default = /*#__PURE__*/__nccwpck_require__.n(filehound);
-// EXTERNAL MODULE: external "fs"
-var external_fs_ = __nccwpck_require__(7147);
-;// CONCATENATED MODULE: ./src/update-changelogs.ts
-
-
-const re_meta_file = /\/(\d+)\/meta\.json$/;
-const re_changelog = /\/(\d+)\/([a-zA-Z-]+)\.md$/;
-async function load_metadata(meta_path) {
-    const pr_dict = {};
-    const files = await filehound_default().create().paths(meta_path).find();
-    for (const file of files) {
-        let match = re_meta_file.exec(file);
-        if (match) {
-            const pr_number = match[1];
-            const meta = JSON.parse(file);
-            if (!pr_dict[pr_number]) {
-                pr_dict[pr_number] = { changelogs: {} };
-            }
-            pr_dict[pr_number].meta = meta;
-        }
-        match = re_changelog.exec(file);
-        if (match) {
-            const pr_number = match[1];
-            const lang = match[2];
-            // read file
-            const body = (0,external_fs_.readFileSync)(file, 'utf8');
-            if (!pr_dict[pr_number]) {
-                pr_dict[pr_number] = { changelogs: {} };
-            }
-            pr_dict[pr_number].changelogs[lang] = { lang, body };
-        }
-    }
-    return pr_dict;
-}
-async function update_changelog(args) {
-    const meta_root = args['meta'];
-    //const changelog = args['changelog']
-    const metadata = load_metadata(meta_root);
-    console.log(JSON.stringify(metadata, null, 2));
-}
-
-;// CONCATENATED MODULE: ./src/index.ts
-/**
- * The entrypoint for the action.
- */
-
-
-
-
-
-async function run() {
-    try {
-        const command = core.getInput('command');
-        switch (command) {
-            case 'check_changelog':
-                await check_changelog();
-                break;
-            case 'record_pr_changelog':
-                await record_pr_changelog();
-                break;
-            default:
-                core.setFailed('Unknown command: ' + command);
-                break;
-        }
-    }
-    catch (error) {
-        // Fail the workflow run if an error occurs
-        if (error instanceof Error)
-            core.setFailed(error.message);
-    }
-}
-console.log(JSON.stringify(process.argv, null, 2));
-if (process.argv.length > 2) {
-    const args = minimist_default()(process.argv);
-    console.info(args);
-    switch (args['command']) {
-        case 'update-changelog':
-            update_changelog(args);
-            break;
-        default:
-            console.error('Unknown command: ' + args['command']);
-            process.exit(1);
-            break;
-    }
-}
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
-run();
-
-})();
-
-var __webpack_exports__run = __webpack_exports__.K;
-export { __webpack_exports__run as run };
+/******/ });
+/************************************************************************/
+/******/ // The module cache
+/******/ var __webpack_module_cache__ = {};
+/******/ 
+/******/ // The require function
+/******/ function __nccwpck_require__(moduleId) {
+/******/ 	// Check if module is in cache
+/******/ 	var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 	if (cachedModule !== undefined) {
+/******/ 		return cachedModule.exports;
+/******/ 	}
+/******/ 	// Create a new module (and put it into the cache)
+/******/ 	var module = __webpack_module_cache__[moduleId] = {
+/******/ 		id: moduleId,
+/******/ 		loaded: false,
+/******/ 		exports: {}
+/******/ 	};
+/******/ 
+/******/ 	// Execute the module function
+/******/ 	var threw = true;
+/******/ 	try {
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __nccwpck_require__);
+/******/ 		threw = false;
+/******/ 	} finally {
+/******/ 		if(threw) delete __webpack_module_cache__[moduleId];
+/******/ 	}
+/******/ 
+/******/ 	// Flag the module as loaded
+/******/ 	module.loaded = true;
+/******/ 
+/******/ 	// Return the exports of the module
+/******/ 	return module.exports;
+/******/ }
+/******/ 
+/************************************************************************/
+/******/ /* webpack/runtime/async module */
+/******/ (() => {
+/******/ 	var webpackQueues = typeof Symbol === "function" ? Symbol("webpack queues") : "__webpack_queues__";
+/******/ 	var webpackExports = typeof Symbol === "function" ? Symbol("webpack exports") : "__webpack_exports__";
+/******/ 	var webpackError = typeof Symbol === "function" ? Symbol("webpack error") : "__webpack_error__";
+/******/ 	var resolveQueue = (queue) => {
+/******/ 		if(queue && !queue.d) {
+/******/ 			queue.d = 1;
+/******/ 			queue.forEach((fn) => (fn.r--));
+/******/ 			queue.forEach((fn) => (fn.r-- ? fn.r++ : fn()));
+/******/ 		}
+/******/ 	}
+/******/ 	var wrapDeps = (deps) => (deps.map((dep) => {
+/******/ 		if(dep !== null && typeof dep === "object") {
+/******/ 			if(dep[webpackQueues]) return dep;
+/******/ 			if(dep.then) {
+/******/ 				var queue = [];
+/******/ 				queue.d = 0;
+/******/ 				dep.then((r) => {
+/******/ 					obj[webpackExports] = r;
+/******/ 					resolveQueue(queue);
+/******/ 				}, (e) => {
+/******/ 					obj[webpackError] = e;
+/******/ 					resolveQueue(queue);
+/******/ 				});
+/******/ 				var obj = {};
+/******/ 				obj[webpackQueues] = (fn) => (fn(queue));
+/******/ 				return obj;
+/******/ 			}
+/******/ 		}
+/******/ 		var ret = {};
+/******/ 		ret[webpackQueues] = x => {};
+/******/ 		ret[webpackExports] = dep;
+/******/ 		return ret;
+/******/ 	}));
+/******/ 	__nccwpck_require__.a = (module, body, hasAwait) => {
+/******/ 		var queue;
+/******/ 		hasAwait && ((queue = []).d = 1);
+/******/ 		var depQueues = new Set();
+/******/ 		var exports = module.exports;
+/******/ 		var currentDeps;
+/******/ 		var outerResolve;
+/******/ 		var reject;
+/******/ 		var promise = new Promise((resolve, rej) => {
+/******/ 			reject = rej;
+/******/ 			outerResolve = resolve;
+/******/ 		});
+/******/ 		promise[webpackExports] = exports;
+/******/ 		promise[webpackQueues] = (fn) => (queue && fn(queue), depQueues.forEach(fn), promise["catch"](x => {}));
+/******/ 		module.exports = promise;
+/******/ 		body((deps) => {
+/******/ 			currentDeps = wrapDeps(deps);
+/******/ 			var fn;
+/******/ 			var getResult = () => (currentDeps.map((d) => {
+/******/ 				if(d[webpackError]) throw d[webpackError];
+/******/ 				return d[webpackExports];
+/******/ 			}))
+/******/ 			var promise = new Promise((resolve) => {
+/******/ 				fn = () => (resolve(getResult));
+/******/ 				fn.r = 0;
+/******/ 				var fnQueue = (q) => (q !== queue && !depQueues.has(q) && (depQueues.add(q), q && !q.d && (fn.r++, q.push(fn))));
+/******/ 				currentDeps.map((dep) => (dep[webpackQueues](fnQueue)));
+/******/ 			});
+/******/ 			return fn.r ? promise : getResult();
+/******/ 		}, (err) => ((err ? reject(promise[webpackError] = err) : outerResolve(exports)), resolveQueue(queue)));
+/******/ 		queue && (queue.d = 0);
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/compat get default export */
+/******/ (() => {
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__nccwpck_require__.n = (module) => {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			() => (module['default']) :
+/******/ 			() => (module);
+/******/ 		__nccwpck_require__.d(getter, { a: getter });
+/******/ 		return getter;
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/define property getters */
+/******/ (() => {
+/******/ 	// define getter functions for harmony exports
+/******/ 	__nccwpck_require__.d = (exports, definition) => {
+/******/ 		for(var key in definition) {
+/******/ 			if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 			}
+/******/ 		}
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/hasOwnProperty shorthand */
+/******/ (() => {
+/******/ 	__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/node module decorator */
+/******/ (() => {
+/******/ 	__nccwpck_require__.nmd = (module) => {
+/******/ 		module.paths = [];
+/******/ 		if (!module.children) module.children = [];
+/******/ 		return module;
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/compat */
+/******/ 
+/******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = new URL('.', import.meta.url).pathname.slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
+/******/ 
+/************************************************************************/
+/******/ 
+/******/ // startup
+/******/ // Load entry module and return exports
+/******/ // This entry module used 'module' so it can't be inlined
+/******/ var __webpack_exports__ = __nccwpck_require__(6144);
+/******/ __webpack_exports__ = await __webpack_exports__;
+/******/ var __webpack_exports__run = __webpack_exports__.K;
+/******/ export { __webpack_exports__run as run };
+/******/ 
 
 //# sourceMappingURL=index.js.map

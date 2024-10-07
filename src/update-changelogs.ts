@@ -50,6 +50,7 @@ async function load_metadata(meta_path: string): Promise<PRDict> {
 }
 
 export async function update_changelog(args: ParsedArgs): Promise<void> {
+  console.log('update_changelog')
   const meta_root = args['meta']
   //const changelog = args['changelog']
 
