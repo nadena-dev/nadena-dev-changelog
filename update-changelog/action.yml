@@ -60,7 +60,7 @@ runs:
       run: |
         for file in ${{ inputs.changelog_file }}; do
           echo "Generating changelog for $file"
-          node $GITHUB_ACTION_PATH/../dist/index.js --comand=update-changelog --meta=$GITHUB_ACTION_PATH/update-changelog-meta --changelog=$GITHUB_ACTION_PATH/update-changelog-wc/$file
+          node $GITHUB_ACTION_PATH/../dist/index.js --command=update-changelog --meta=$GITHUB_ACTION_PATH/update-changelog-meta --changelog=$GITHUB_ACTION_PATH/update-changelog-wc/$file
         done
       env:
         GITHUB_ACTION_PATH: ${{ github.action_path }}
