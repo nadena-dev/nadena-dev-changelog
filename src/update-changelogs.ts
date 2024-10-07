@@ -156,6 +156,11 @@ function insert_unknown_prs(
       heading_to_pr.get(heading)?.push(pr_number)
     }
   }
+  console.info({
+    metadata,
+    m_keys: Object.keys(metadata),
+    heading_to_pr
+  })
 
   let line: string | undefined
   while ((line = lines.shift())) {

@@ -91279,6 +91279,11 @@ function insert_unknown_prs(changelog_string, metadata, unreleased_headings) {
             heading_to_pr.get(heading)?.push(pr_number);
         }
     }
+    console.info({
+        metadata,
+        m_keys: Object.keys(metadata),
+        heading_to_pr
+    });
     let line;
     while ((line = lines.shift())) {
         if (line.startsWith('# ')) {
