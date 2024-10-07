@@ -48,13 +48,13 @@ runs:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.target_branch }}
         token: ${{ inputs.token }}
-        path: update-changelog-wc
+        path: .update-changelog-wc
     - uses: actions/checkout@v4
       with:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.meta_branch }}
         token: ${{ inputs.token }}
-        path: update-changelog-meta
+        path: .update-changelog-meta
     - name: Generate changelog
       shell: bash
       run: |
@@ -73,6 +73,7 @@ runs:
         # Check if there are any changes
         cd $GITHUB_ACTION_PATH
         if [[ -n $(git -C update-changelog-wc status --porcelain) ]]; then
+          git -C update-changelog-wc diff
           git -C update-changelog-wc config user.name "${{ inputs.git-committer }}"
           git -C update-changelog-wc config user.email "${{ inputs.git-email }}"
           git -C update-changelog-wc add .
