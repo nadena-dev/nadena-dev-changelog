@@ -1,0 +1,73 @@
+name: 'Updates changelog file'
+author: 'bd_'
+
+# Add your action's branding here. This will appear on the GitHub Marketplace.
+# branding:
+#   icon: 'heart'
+#   color: 'red'
+
+# Define your inputs here.
+inputs:
+  repository:
+    description: 'Repository name (including owner)'
+    default: ${{ github.repository	}}
+  meta_branch:
+    description: 'Meta branch name'
+    default: meta-changelog
+  target_branch:
+    description: 'Target branch name'
+    default: main
+  changelog_file:
+    description: 'Changelog file path(s)'
+    default: CHANGELOG.md
+  command:
+    default: update_changelog
+  token:
+    description: 'GitHub token'
+    required: true
+  git-committer:
+    description: 'Git committer name'
+    default: nadena.dev CI
+  git-email:
+    description: 'Git committer email'
+    default: 'ci@nadena.dev'
+
+# Define your outputs here.
+# outputs:
+#   time:
+#     description: 'Your output description here'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v3.6.0
+      with:
+        node-version: 20
+    - uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repository }}
+        ref: ${{ inputs.target_branch }}
+        token: ${{ inputs.token }}
+        path: update-changelog-wc
+    - uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repository }}
+        ref: ${{ inputs.meta_branch }}
+        token: ${{ inputs.token }}
+        path: update-changelog-meta
+    - name: Generate changelog
+      run: |
+        for file in ${{ inputs.changelog_file }}; do
+          echo "Generating changelog for $file"
+          node ../dist/index.js --comand=update-changelog --meta=update-changelog-meta --changelog=update-changelog-wc/$file
+        done
+    - name: Commit changelog
+      run: |
+        # Check if there are any changes
+        if [[ -n $(git -C update-changelog-wc status --porcelain) ]]; then
+          git -C update-changelog-wc config user.name "${{ inputs.git-committer }}"
+          git -C update-changelog-wc config user.email "${{ inputs.git-email }}"
+          git -C update-changelog-wc add .
+          git -C update-changelog-wc commit -m "Update changelog"
+          git -C update-changelog-wc push
+        fi
