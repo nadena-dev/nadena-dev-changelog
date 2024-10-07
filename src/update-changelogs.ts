@@ -176,6 +176,7 @@ function insert_unknown_prs(
           }
         }
       } else if (toplevel_section_count > 1) {
+        console.log(`Bailing out at: ${line}`)
         lines.unshift(output_lines.pop() ?? '')
         break
       }
@@ -241,7 +242,7 @@ function insert_unknown_prs(
   // Flush any remaining lines
   output_lines.push(...lines)
 
-  return output_lines.join('\n') + '\n'
+  return output_lines.join("\n").trim() + "\n"
 }
 
 function parse_known_prs(changelog_string: string): {
