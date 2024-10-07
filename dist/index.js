@@ -91287,6 +91287,7 @@ function insert_unknown_prs(changelog_string, metadata, unreleased_headings) {
     });
     let line;
     while ((line = lines.shift())) {
+        console.log(`Processing line: ${line}`);
         if (line.startsWith('# ')) {
             output_lines.push(line);
             toplevel_section_count++;
