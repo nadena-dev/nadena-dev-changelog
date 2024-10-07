@@ -91286,7 +91286,7 @@ function insert_unknown_prs(changelog_string, metadata, unreleased_headings) {
         heading_to_pr
     });
     let line;
-    while ((line = lines.shift())) {
+    while ((line = lines.shift()) !== undefined) {
         console.log(`Processing line: ${line}`);
         if (line.startsWith('# ')) {
             output_lines.push(line);
