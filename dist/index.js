@@ -85232,6 +85232,7 @@ if (process.argv.length > 2) {
             process.exit(1);
             break;
     }
+    process.exit(0);
 }
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 run();
@@ -85710,7 +85711,7 @@ async function update_changelog(args) {
     console.log('update_changelog');
     const meta_root = args['meta'];
     //const changelog = args['changelog']
-    const metadata = load_metadata(meta_root);
+    const metadata = await load_metadata(meta_root);
     console.log(JSON.stringify(metadata, null, 2));
 }
 

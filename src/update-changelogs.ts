@@ -54,7 +54,7 @@ export async function update_changelog(args: ParsedArgs): Promise<void> {
   const meta_root = args['meta']
   //const changelog = args['changelog']
 
-  const metadata = load_metadata(meta_root)
+  const metadata = await load_metadata(meta_root)
 
   console.log(JSON.stringify(metadata, null, 2))
 }

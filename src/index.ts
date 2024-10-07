@@ -44,6 +44,7 @@ if (process.argv.length > 2) {
       process.exit(1)
       break
   }
+  process.exit(0)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
