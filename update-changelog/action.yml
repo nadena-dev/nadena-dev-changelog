@@ -48,19 +48,19 @@ runs:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.target_branch }}
         token: ${{ inputs.token }}
-        path: ${{ github.action_path }}/update-changelog-wc
+        path: update-changelog-wc
     - uses: actions/checkout@v4
       with:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.meta_branch }}
         token: ${{ inputs.token }}
-        path: ${{ github.action_path }}/update-changelog-meta
+        path: update-changelog-meta
     - name: Generate changelog
       shell: bash
       run: |
         for file in ${{ inputs.changelog_file }}; do
           echo "Generating changelog for $file"
-          node $GITHUB_ACTION_PATH/../dist/index.js --command=update-changelog --meta=$GITHUB_ACTION_PATH/update-changelog-meta --changelog=$GITHUB_ACTION_PATH/update-changelog-wc/$file
+          node $GITHUB_ACTION_PATH/../dist/index.js --command=update-changelog --meta=update-changelog-meta --changelog=update-changelog-wc/$file
         done
       env:
         GITHUB_ACTION_PATH: ${{ github.action_path }}
