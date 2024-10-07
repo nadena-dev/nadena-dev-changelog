@@ -91177,8 +91177,12 @@ var external_fs_ = __nccwpck_require__(7147);
 
 
 const re_meta_file = /\/(\d+)\/meta\.json$/;
+const re_sentinel = /\/(\d+)\/inserted$/;
 const re_changelog = /\/(\d+)\/([a-zA-Z-]+)\.md$/;
-async function load_metadata(meta_path) {
+const re_pr_start = /^<!--\s*PR-(\d+)\s*-->\s*$/m;
+const re_heading = /^##\s+(.*?)\s*$/;
+const re_end = /^<!--\s*END\s*-->\s*$/;
+async function load_metadata(meta_path, target_lang, fallback_lang) {
     const pr_dict = {};
     const files = await filehound_default().create().paths(meta_path).find();
     for (const file of files) {
@@ -91187,7 +91191,7 @@ async function load_metadata(meta_path) {
             const pr_number = match[1];
             const meta = JSON.parse(file);
             if (!pr_dict[pr_number]) {
-                pr_dict[pr_number] = { changelogs: {} };
+                pr_dict[pr_number] = {};
             }
             pr_dict[pr_number].meta = meta;
         }
@@ -91198,9 +91202,20 @@ async function load_metadata(meta_path) {
             // read file
             const body = (0,external_fs_.readFileSync)(file, 'utf8');
             if (!pr_dict[pr_number]) {
-                pr_dict[pr_number] = { changelogs: {} };
+                pr_dict[pr_number] = {};
             }
-            pr_dict[pr_number].changelogs[lang] = { lang, body };
+            if (lang === target_lang ||
+                (lang === fallback_lang && !pr_dict[pr_number].changelog)) {
+                pr_dict[pr_number].changelog = body;
+            }
+        }
+        match = re_sentinel.exec(file);
+        if (match) {
+            const pr_number = match[1];
+            if (!pr_dict[pr_number]) {
+                pr_dict[pr_number] = {};
+            }
+            pr_dict[pr_number].inserted = true;
         }
     }
     return pr_dict;
@@ -91208,9 +91223,144 @@ async function load_metadata(meta_path) {
 async function update_changelog(args) {
     console.log('update_changelog');
     const meta_root = args['meta'];
-    //const changelog = args['changelog']
-    const metadata = await load_metadata(meta_root);
+    const changelog = args['changelog'];
+    const lang = args['lang'];
+    const fallback_lang = args['fallback-lang'];
+    const metadata = await load_metadata(meta_root, lang, fallback_lang);
     console.log(JSON.stringify(metadata, null, 2));
+    let changelog_string = (0,external_fs_.readFileSync)(changelog, 'utf8');
+    const { present_prs, unreleased_headings } = parse_known_prs(changelog_string);
+    for (const pr_number of present_prs) {
+        if (metadata[pr_number]) {
+            metadata[pr_number].inserted = true;
+        }
+    }
+    for (const pr_number of [...Object.keys(metadata)]) {
+        const pr = metadata[pr_number];
+        if (!pr.changelog) {
+            delete metadata[pr_number];
+        }
+    }
+    changelog_string = insert_unknown_prs(changelog_string, metadata, unreleased_headings);
+    (0,external_fs_.writeFileSync)(changelog, changelog_string);
+    for (const pr_number of Object.keys(metadata)) {
+        const pr = metadata[pr_number];
+        if (pr.inserted) {
+            (0,external_fs_.writeFileSync)(`${meta_root}/${pr_number}/inserted`, '');
+        }
+    }
+}
+function format_pr(pr_number, pr) {
+    const lines = [];
+    if (pr.meta) {
+        lines.push(JSON.stringify(pr.meta));
+    }
+    lines.push(`<!-- PR-${pr_number} -->`);
+    lines.push(pr.changelog ?? '');
+    lines.push('<!-- END -->');
+    return lines;
+}
+function insert_unknown_prs(changelog_string, metadata, unreleased_headings) {
+    const lines = changelog_string.split('\n');
+    const output_lines = [];
+    let toplevel_section_count = 0;
+    let cur_heading = undefined;
+    const heading_to_pr = new Map();
+    for (const pr_number of Object.keys(metadata)) {
+        const pr = metadata[pr_number];
+        if (!pr.inserted) {
+            const heading = pr.meta?.heading ?? 'Uncategorized';
+            if (!heading_to_pr.has(heading)) {
+                heading_to_pr.set(heading, []);
+            }
+            heading_to_pr.get(heading)?.push(pr_number);
+        }
+    }
+    let line;
+    while ((line = lines.shift())) {
+        if (line.startsWith('# ')) {
+            output_lines.push(line);
+            toplevel_section_count++;
+            if (toplevel_section_count === 1) {
+                for (const heading of Object.keys(heading_to_pr)) {
+                    if (!unreleased_headings.has(heading)) {
+                        output_lines.push(`## ${heading}`);
+                        for (const pr_number of heading_to_pr.get(heading) ?? '') {
+                            const pr = metadata[pr_number];
+                            output_lines.push(...format_pr(pr_number, pr));
+                        }
+                    }
+                }
+            }
+            else if (toplevel_section_count > 1) {
+                lines.unshift(output_lines.pop() ?? '');
+                break;
+            }
+            continue;
+        }
+        const heading_match = re_heading.exec(line);
+        if (heading_match) {
+            // Before we move to the next heading, we need to 1) remove any blank lines at the end,
+            // and 2) flush any new entries for this heading
+            while (output_lines.length > 0 &&
+                output_lines[output_lines.length - 1].trim() === '') {
+                output_lines.pop();
+            }
+            const new_prs = heading_to_pr.get(heading_match[1]);
+            if (new_prs) {
+                for (const pr_number of new_prs) {
+                    const pr = metadata[pr_number];
+                    output_lines.push(...format_pr(pr_number, pr));
+                }
+            }
+            output_lines.push('');
+            cur_heading = heading_match[1];
+        }
+        const pr_match = re_pr_start.exec(line);
+        if (pr_match &&
+            Object.prototype.hasOwnProperty.call(metadata, pr_match[1])) {
+            while (!re_end.exec(lines[0])) {
+                lines.shift();
+            }
+            output_lines.push(line);
+            const pr = metadata[pr_match[1]];
+            output_lines.push(...format_pr(pr_match[1], pr));
+            // Allow the end line to flush below
+        }
+        output_lines.push(line);
+    }
+    // Flush the last encountered section
+    const new_prs = heading_to_pr.get(cur_heading ?? '');
+    if (new_prs) {
+        for (const pr_number of new_prs) {
+            const pr = metadata[pr_number];
+            output_lines.push(...format_pr(pr_number, pr));
+        }
+    }
+    // Flush any remaining lines
+    output_lines.push(...lines);
+    return output_lines.join('\n') + '\n';
+}
+function parse_known_prs(changelog_string) {
+    const present_prs = new Set();
+    const unreleased_headings = new Set();
+    const lines = changelog_string.split('\n');
+    let toplevel_section_count = 0;
+    for (const line of lines) {
+        const match = re_pr_start.exec(line);
+        if (match) {
+            const pr_number = match[1];
+            present_prs.add(pr_number);
+        }
+        if (line.startsWith('# ')) {
+            toplevel_section_count++;
+        }
+        const heading_match = re_heading.exec(line);
+        if (heading_match && toplevel_section_count === 1) {
+            unreleased_headings.add(heading_match[1]);
+        }
+    }
+    return { present_prs, unreleased_headings };
 }
 
 ;// CONCATENATED MODULE: ./src/index.ts

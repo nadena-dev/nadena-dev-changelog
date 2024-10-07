@@ -100,7 +100,11 @@ export async function update_changelog(args: ParsedArgs): Promise<void> {
     }
   }
 
-  insert_unknown_prs(changelog_string, metadata, unreleased_headings)
+  changelog_string = insert_unknown_prs(
+    changelog_string,
+    metadata,
+    unreleased_headings
+  )
 
   writeFileSync(changelog, changelog_string)
 
@@ -120,7 +124,7 @@ function format_pr(pr_number: string, pr: PRInfo): string[] {
   }
 
   lines.push(`<!-- PR-${pr_number} -->`)
-  lines.push(pr.changelog!)
+  lines.push(pr.changelog ?? '')
   lines.push('<!-- END -->')
 
   return lines
@@ -146,7 +150,7 @@ function insert_unknown_prs(
       if (!heading_to_pr.has(heading)) {
         heading_to_pr.set(heading, [])
       }
-      heading_to_pr.get(heading)!.push(pr_number)
+      heading_to_pr.get(heading)?.push(pr_number)
     }
   }
 
@@ -162,14 +166,14 @@ function insert_unknown_prs(
           if (!unreleased_headings.has(heading)) {
             output_lines.push(`## ${heading}`)
 
-            for (const pr_number of heading_to_pr.get(heading)!) {
+            for (const pr_number of heading_to_pr.get(heading) ?? '') {
               const pr = metadata[pr_number]
               output_lines.push(...format_pr(pr_number, pr))
             }
           }
         }
       } else if (toplevel_section_count > 1) {
-        lines.unshift(output_lines.pop()!)
+        lines.unshift(output_lines.pop() ?? '')
         break
       }
       continue
@@ -200,7 +204,10 @@ function insert_unknown_prs(
     }
 
     const pr_match = re_pr_start.exec(line)
-    if (pr_match && metadata.hasOwnProperty(pr_match[1])) {
+    if (
+      pr_match &&
+      Object.prototype.hasOwnProperty.call(metadata, pr_match[1])
+    ) {
       while (!re_end.exec(lines[0])) {
         lines.shift()
       }
