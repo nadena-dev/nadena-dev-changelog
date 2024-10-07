@@ -91305,6 +91305,7 @@ function insert_unknown_prs(changelog_string, metadata, unreleased_headings) {
         }
         const heading_match = re_heading.exec(line);
         if (heading_match) {
+            console.log(`encountered heading: ${heading_match[1]}`);
             // Before we move to the next heading, we need to 1) remove any blank lines at the end,
             // and 2) flush any new entries for this heading
             while (output_lines.length > 0 &&
