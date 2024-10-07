@@ -36,8 +36,6 @@ inputs:
 # outputs:
 #   time:
 #     description: 'Your output description here'
-env:
-  GITHUB_ACTION_PATH: ${{ github.action_path }}
 
 runs:
   using: composite
@@ -68,6 +66,9 @@ runs:
           echo "Generating changelog for $file"
           node ../dist/index.js --comand=update-changelog --meta=update-changelog-meta --changelog=update-changelog-wc/$file
         done
+      env:
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+
     - name: Commit changelog
       shell: bash
       run: |
