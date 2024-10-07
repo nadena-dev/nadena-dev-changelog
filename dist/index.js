@@ -91230,6 +91230,11 @@ async function update_changelog(args) {
     console.log(JSON.stringify(metadata, null, 2));
     let changelog_string = (0,external_fs_.readFileSync)(changelog, 'utf8');
     const { present_prs, unreleased_headings } = parse_known_prs(changelog_string);
+    console.info({
+        metadata,
+        present_prs,
+        unreleased_headings
+    });
     for (const pr_number of present_prs) {
         if (metadata[pr_number]) {
             metadata[pr_number].inserted = true;

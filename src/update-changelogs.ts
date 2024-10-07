@@ -87,6 +87,12 @@ export async function update_changelog(args: ParsedArgs): Promise<void> {
 
   const { present_prs, unreleased_headings } = parse_known_prs(changelog_string)
 
+  console.info({
+    metadata,
+    present_prs,
+    unreleased_headings
+  })
+
   for (const pr_number of present_prs) {
     if (metadata[pr_number]) {
       metadata[pr_number].inserted = true
